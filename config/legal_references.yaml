@@ -1,0 +1,531 @@
+# config/legal_references.yaml
+#
+# Configuração legal congelada para a POC do Agente de IA de Isenção de IPTU
+# Município de Guarulhos/SP
+#
+# Status:
+# - Válido para implementação e demonstração da POC.
+# - Não deve ser tratado como base legal definitiva de produção.
+# - Campos PENDING_CONFIRMATION exigem confirmação por texto normativo integral
+#   ou validação formal da Secretaria da Receita.
+
+metadata:
+  config_name: legal_references
+  version: "1.2.0-poc-p0-fixes"
+  frozen: false
+  frozen_at: null
+  legal_review_status: "PARTIALLY_VALIDATED_FROM_UPLOADED_LEGISLATION"
+  changelog:
+    - "1.2.0-poc-p0-fixes: adicionada revocation_policy (norma revogada continua aplicável a processos do seu período de vigência)."
+    - "1.2.0-poc-p0-fixes: confirmado e travado o article_map do Decreto 34.767/2018 (art. 3º = outras fontes de renda; art. 7º = indeferimento de plano), superando o mapa divergente do documento de requisitos .md."
+  pending_documents:
+    - "Lei nº 8.430/2025"
+    - "Decreto nº 42.621/2025 integral"
+  project: "poc_iptu_ai"
+  municipality: "Guarulhos/SP"
+  product: "Agente de IA para Triagem e Minuta de Isenção de IPTU"
+  scope:
+    - "Isenção de IPTU para aposentados"
+    - "Isenção de IPTU para pensionistas"
+    - "Isenção de IPTU para beneficiários LOAS"
+    - "Análise documental e admissibilidade de 1ª instância"
+    - "Geração de minuta revisável"
+  out_of_scope:
+    - "Produtor rural"
+    - "Segunda instância/JRF"
+    - "Detecção de fraude"
+    - "Validação de autenticidade documental"
+    - "Integração real com SEI"
+    - "Integração ao vivo com bases externas"
+    - "Decisão final vinculante"
+  source_documents:
+    - "Documento de Requisitos — Agente de IA para Análise de Isenção de IPTU (Guarulhos)"
+    - "Análise do Caso-Ouro SEI 1101.2023/0005737-8"
+    - "Avaliação Arquitetural — POC Agente de Isenção de IPTU"
+    - "Declaração do Regime de Ocupação — Decreto nº 42.621/2025"
+  notes:
+    - "Esta configuração é a baseline técnica da POC."
+    - "A decisão final continua sendo da autoridade competente; a IA gera minuta revisável."
+    - "O motor deve selecionar o decreto regulamentador por menção explícita no PDF, data de protocolo ou exercício pleiteado."
+    - "Quando não for possível selecionar o regime normativo com segurança, o status deve ser VERIFICAR_MANUALMENTE."
+    - "Referências marcadas como PENDING_CONFIRMATION não devem ser usadas como fundamento definitivo sem confirmação."
+
+# ---------------------------------------------------------------------------
+# 1. NORMA BASE DO BENEFÍCIO
+# ---------------------------------------------------------------------------
+
+benefit_law:
+  id: "LEI_4158_1992"
+  name: "Lei Municipal nº 4.158/1992"
+  subject: "Concessão de isenção de IPTU para aposentados, pensionistas e beneficiários LOAS"
+  status: "REVOGADA"
+  revoked_by: "Lei nº 8.430/2025"
+  role_in_poc:
+    - "Definir quem tem direito ao benefício"
+    - "Definir o limite de renda aplicável"
+    - "Servir como norma base citada na minuta"
+  amendments:
+    - id: "LEI_6192_2006"
+      name: "Lei Municipal nº 6.192/2006"
+      status: "PENDING_FULL_TEXT"
+    - id: "LEI_7460_2016"
+      name: "Lei Municipal nº 7.460/2016"
+      status: "PENDING_FULL_TEXT"
+    - id: "LEI_8285_2024"
+      name: "Lei Municipal nº 8.285/2024"
+      status: "PENDING_FULL_TEXT"
+  engineering_rules:
+    eligible_benefit_types:
+      - APOSENTADO
+      - PENSIONISTA
+      - LOAS
+    excluded_from_poc:
+      - PRODUTOR_RURAL
+    income_limit:
+      unit: "SALARIO_MINIMO"
+      multiplier: 5
+      basis: "RENDA_BRUTA_MENSAL"
+      allow_multiple_income_sources: true
+    multiple_properties_rule:
+      automatic_denial: false
+      rule: "Quando houver mais de um imóvel, o benefício pode recair sobre o imóvel em que o beneficiário reside."
+    usufruct_rule:
+      accepted: true
+      rule: "Admitir usufrutuário quando houver escritura pública ou decisão judicial que comprove reserva de usufruto."
+    human_review_required: true
+
+# ---------------------------------------------------------------------------
+# 1.1 POLÍTICA DE NORMA REVOGADA (P0)
+# ---------------------------------------------------------------------------
+
+revocation_policy:
+  rule: >
+    Uma norma com status REVOGADA/REVOGADO permanece sendo o fundamento aplicável aos
+    processos protocolados durante seu período de vigência. A revogação posterior não
+    desloca retroativamente o regime aplicável ao processo. Exemplo: o caso-ouro
+    (exercício 2024) é corretamente fundamentado no Decreto nº 34.767/2018, ainda que
+    revogado pelo Decreto nº 42.621/2025.
+  engineering_rule: >
+    O motor NÃO deve recusar-se a citar uma norma apenas por estar revogada. Deve citar a
+    norma vigente à época do processo, conforme a estratégia de seleção do regime
+    (regulatory_decrees.selection_strategy). O status de revogação é informativo para
+    rastreabilidade, não um bloqueio de fundamentação.
+  applies_to:
+    - "benefit_law (Lei nº 4.158/1992, REVOGADA pela Lei nº 8.430/2025)"
+    - "regulatory_decrees.items[DEC_34767_2018] (REVOGADO pelo Decreto nº 42.621/2025)"
+
+# ---------------------------------------------------------------------------
+# 2. DECRETOS REGULAMENTADORES DA ISENÇÃO
+# ---------------------------------------------------------------------------
+
+regulatory_decrees:
+  selection_strategy:
+    description: "Estratégia de seleção do decreto regulamentador aplicável ao processo."
+    priority:
+      - "explicit_mention_in_pdf"
+      - "protocol_date"
+      - "requested_year"
+      - "fallback_verify_manually"
+    fallback_status: "VERIFICAR_MANUALMENTE"
+    fallback_reason: "Não foi possível selecionar com segurança o decreto aplicável."
+    engineering_rule: >
+      Se o PDF mencionar explicitamente o Decreto nº 34.767/2018 ou o Decreto nº 42.621/2025,
+      essa menção prevalece para a POC. Se não houver menção clara, usar data de protocolo
+      ou exercício pleiteado. Persistindo dúvida, não gerar fundamento normativo definitivo;
+      marcar VERIFICAR_MANUALMENTE.
+
+  items:
+    - id: "DEC_34767_2018"
+      name: "Decreto nº 34.767/2018"
+      subject: "Regulamentação histórica da Lei Municipal nº 4.158/1992"
+      status: "REVOGADO"
+      revoked_by: "Decreto nº 42.621/2025"
+      evidence_status: "CONFIRMED_FROM_UPLOADED_LEGISLATION"
+      usage_in_poc: "HISTORICAL_REGIME_WITH_WARNING"
+      applies_to:
+        from: "2018-03-13"
+        until: "2025-XX-XX"
+        date_rule_status: "PENDING_CONFIRMATION"
+      article_map:
+        initial_declaration: "art. 1º"
+        document_checklist: "art. 2º"
+        other_income_sources: "art. 3º"
+        revenue_federal_agreement: "art. 4º"
+        property_must_be_split_in_cadastre: "art. 5º"
+        block_or_subblock_residence: "art. 6º"
+        summary_denial: "art. 7º"
+        renewal_rules: "art. 8º"
+        iptu_tax_code_after_benefit: "art. 9º"
+        request_deadline: "art. 10"
+        benefit_transfer_or_property_change: "art. 11"
+        duty_to_report_change: "art. 12"
+        effective_date_and_revocation: "art. 13"
+      poc_usage:
+        applicable_when:
+          - "Processo menciona expressamente Decreto nº 34.767/2018"
+          - "Processo antigo sob regime anterior"
+          - "Exercício/data de protocolo anterior à vigência confirmada do Decreto nº 42.621/2025"
+        golden_case:
+          process: "SEI 1101.2023/0005737-8"
+          requested_year: "2024"
+          official_result: "INDEFERIDO"
+          expected_poc_status: "INDEFERIMENTO_SUGERIDO"
+          expected_basis:
+            - "Decreto nº 34.767/2018, art. 3º"
+            - "Decreto nº 34.767/2018, art. 7º"
+      notes:
+        - "O caso-ouro demonstrou que processos de exercício 2024 podem estar fundamentados no Decreto nº 34.767/2018."
+        - "Não usar automaticamente o Decreto nº 42.621/2025 para processos antigos."
+        - "A data final de vigência/revogação ainda precisa ser confirmada por texto normativo integral."
+        - "MAPA DE ARTIGOS CONFIRMADO (P0): art. 3º = outras fontes de renda; art. 7º = indeferimento de plano. Este mapa supera o mapa divergente apresentado no documento de requisitos .md (que atribuía art. 3º a imóvel único e art. 6º a outras fontes). O mapa aqui é o que reproduz o fundamento do caso-ouro (art. 3º + art. 7º)."
+
+    - id: "DEC_42621_2025"
+      name: "Decreto nº 42.621/2025"
+      subject: "Regulamentação atual da Lei Municipal nº 4.158/1992"
+      status: "PARTIALLY_CONFIRMED_BY_FORM"
+      evidence_status: "CONFIRMED_PARTIALLY_BY_DECLARACAO_REGIME_OCUPACAO"
+      applies_to:
+        from: "2025-XX-XX"
+        until: null
+        date_rule_status: "PENDING_CONFIRMATION"
+      article_map:
+        document_checklist: "art. 2º"
+        single_property_or_residence: "art. 3º"
+        false_document_or_declaration: "art. 5º"
+        other_income_sources: "art. 6º"
+        property_must_be_split_in_cadastre: "art. 7º"
+        block_or_subblock_residence: "art. 8º"
+        sale_or_change_requires_cancellation: "art. 9º"
+        summary_denial: "PENDING_CONFIRMATION"
+        benefit_validity: "PENDING_CONFIRMATION"
+        request_deadline: "PENDING_CONFIRMATION"
+      confirmed_by_uploaded_form:
+        document: "Declaração do Regime de Ocupação"
+        confirms:
+          - "O formulário atual usa Decreto nº 42.621/2025"
+          - "A Lei Municipal nº 4.158/1992, com alterações pelas Leis nºs 6.192/2006, 7.460/2016 e 8.285/2024, é indicada como regulamentada pelo Decreto nº 42.621/2025"
+          - "Art. 3º — isenção incide apenas sobre o imóvel em que o beneficiário reside quando possuir mais de um imóvel no Município"
+          - "Art. 5º — documento ou declaração falsa enseja indeferimento de plano e/ou cancelamento"
+          - "Art. 6º — proventos de diversas fontes de renda devem ser comprovados"
+          - "Art. 6º, parágrafo único — renda bruta mensal não pode ultrapassar cinco salários mínimos"
+          - "Art. 7º — imóvel deve estar desmembrado no Cadastro Imobiliário Municipal"
+          - "Art. 8º — em blocos/sub-blocos, considerar somente aquele utilizado como residência"
+          - "Art. 9º — venda do imóvel ou mudança de bloco exige solicitação de cancelamento/novo pedido"
+      poc_usage:
+        applicable_when:
+          - "Processo menciona expressamente Decreto nº 42.621/2025"
+          - "Formulário/documento atual da Prefeitura cita Decreto nº 42.621/2025"
+          - "Processo novo sob regime posterior à vigência confirmada do Decreto nº 42.621/2025"
+      notes:
+        - "O formulário enviado confirma parcialmente o decreto, mas não contém o texto integral."
+        - "Artigos 10, 11, 12 e 13 não foram confirmados pelo formulário enviado."
+        - "summary_denial, benefit_validity e request_deadline permanecem como PENDING_CONFIRMATION até acesso ao decreto integral."
+
+# ---------------------------------------------------------------------------
+# 3. IPTU E VÍNCULO COM O IMÓVEL
+# ---------------------------------------------------------------------------
+
+iptu_law:
+  id: "LEI_6793_2010"
+  name: "Lei Municipal nº 6.793/2010"
+  subject: "Lançamento, arrecadação e fiscalização do IPTU no Município de Guarulhos"
+  status: "CONFIRMED_FROM_UPLOADED_LEGISLATION"
+  relevant_articles:
+    taxable_event:
+      article: "art. 1º"
+      text_summary: >
+        O IPTU tem por hipótese de incidência a propriedade, o domínio útil ou a posse de bem imóvel
+        por natureza ou acessão física, localizado na zona urbana do Município.
+      engineering_rule: "Usar como contexto do tributo; não é a regra principal de vínculo do requerente para checklist."
+    taxpayer:
+      article: "art. 7º"
+      text_summary: >
+        Contribuinte do IPTU é o proprietário do imóvel, o titular do seu domínio útil ou o seu possuidor
+        a qualquer título.
+      engineering_rule: >
+        O vínculo com o imóvel deve aceitar proprietário, titular do domínio útil, compromissário,
+        possuidor ou vínculo equivalente documentado. A ausência de matrícula em nome exclusivo do
+        requerente não gera indeferimento automático.
+    taxpayer_detail_after_law_8443_2025:
+      article: "art. 7º, §2º"
+      status: "CONFIRMED_FROM_UPLOADED_LEGISLATION"
+      text_summary: >
+        Para fins de incidência do IPTU, considera proprietário, compromissário e possuidor,
+        conforme redação dada pela Lei nº 8.443/2025.
+      engineering_rule: >
+        Classificar vínculo como PROPRIETARIO, COPROPRIETARIO, COMPROMISSARIO,
+        TITULAR_DOMINIO_UTIL, POSSUIDOR, CESSIONARIO ou VERIFICAR.
+    joint_liability:
+      article: "art. 8º"
+      text_summary: >
+        São solidariamente responsáveis pelo IPTU, entre outros, co-proprietário, compromissário comprador,
+        superficiário, titular de usufruto, cessionários e adquirente.
+      engineering_rule: >
+        Usar como suporte contextual. Não transformar solidariedade em indeferimento automático.
+  corrected_reference:
+    previous_wrong_reference: "art. 35"
+    corrected_reference: "art. 7º"
+    correction_status: "APPLIED"
+    reason: >
+      O art. 7º da Lei Municipal nº 6.793/2010 é o dispositivo correto para definir o contribuinte
+      do IPTU e fundamentar a regra de vínculo amplo com o imóvel na POC.
+  accepted_property_relationship_types:
+    - PROPRIETARIO
+    - COPROPRIETARIO
+    - COMPROMISSARIO
+    - TITULAR_DOMINIO_UTIL
+    - POSSUIDOR
+    - CESSIONARIO
+    - USUFRUTUARIO
+    - VERIFICAR
+  forbidden_engineering_shortcuts:
+    - "Não indeferir automaticamente porque a matrícula não está apenas em nome do requerente."
+    - "Não exigir propriedade formal como único vínculo possível."
+    - "Não transformar múltiplas inscrições em indeferimento automático na POC; marcar VERIFICAR."
+
+# ---------------------------------------------------------------------------
+# 4. CÓDIGO TRIBUTÁRIO MUNICIPAL DE GUARULHOS
+# ---------------------------------------------------------------------------
+
+municipal_tax_code:
+  id: "LEI_7966_2021"
+  name: "Lei Municipal nº 7.966/2021"
+  subject: "Código Tributário do Município de Guarulhos"
+  status: "CONFIRMED_FROM_UPLOADED_LEGISLATION"
+  relevant_articles:
+    municipal_tax_legislation:
+      article: "art. 3º"
+      text_summary: >
+        A legislação tributária do Município compreende leis, decretos e normas complementares
+        que versam sobre tributos e relações jurídicas pertinentes.
+      engineering_rule: "Registrar norma, decreto e versão normativa usada em cada análise."
+    literal_interpretation:
+      article: "art. 9º"
+      text_summary: >
+        Interpreta-se literalmente a lei tributária sempre que dispuser sobre suspensão ou exclusão
+        de crédito tributário, outorga de isenção ou dispensa de obrigações acessórias.
+      engineering_rule: >
+        Para isenção tributária, não ampliar benefício por analogia, não presumir requisito atendido,
+        não inventar documento ausente e marcar VERIFICAR quando houver dúvida.
+    taxpayer_declarations:
+      article: "art. 20"
+      text_summary: >
+        O sujeito passivo, quando convocado, fica obrigado a prestar declarações solicitadas
+        pela autoridade administrativa.
+      engineering_rule: "Usar apenas como suporte contextual; não é regra central da POC."
+
+# ---------------------------------------------------------------------------
+# 5. CÓDIGO TRIBUTÁRIO NACIONAL
+# ---------------------------------------------------------------------------
+
+national_tax_code:
+  id: "LEI_5172_1966"
+  name: "Lei nº 5.172/1966 — Código Tributário Nacional"
+  subject: "Normas gerais de direito tributário"
+  status: "CONFIRMED_FROM_UPLOADED_LEGISLATION"
+  relevant_articles:
+    tax_definition:
+      article: "art. 3º"
+      text_summary: "Tributo é prestação pecuniária compulsória, instituída em lei e cobrada mediante atividade administrativa vinculada."
+      engineering_rule: "Usar apenas como contexto jurídico geral."
+    tax_nature:
+      article: "art. 4º"
+      text_summary: "A natureza jurídica específica do tributo é determinada pelo fato gerador."
+      engineering_rule: "Usar apenas como contexto jurídico geral."
+    property_immunity_and_exemptions:
+      article: "arts. 9º a 14"
+      text_summary: "Tratam de limitações ao poder de tributar e requisitos para determinadas imunidades."
+      engineering_rule: "Não confundir imunidade com isenção municipal de IPTU da Lei nº 4.158/1992."
+    literal_interpretation:
+      article: "art. 111"
+      status: "PENDING_CONFIRMATION_FROM_FULL_TEXT_IN_PROJECT"
+      text_summary: >
+        A legislação tributária que disponha sobre suspensão ou exclusão do crédito tributário,
+        outorga de isenção ou dispensa de obrigações acessórias deve ser interpretada literalmente.
+      engineering_rule: >
+        Aplicar comportamento conservador: ausência ou incerteza documental não pode ser suprida por inferência do LLM.
+
+# ---------------------------------------------------------------------------
+# 6. PROCESSO ADMINISTRATIVO TRIBUTÁRIO
+# ---------------------------------------------------------------------------
+
+administrative_tax_process:
+  law_5420_1999:
+    id: "LEI_5420_1999"
+    name: "Lei Municipal nº 5.420/1999"
+    subject: "Procedimento e Processo Administrativo Tributário"
+    status: "CONFIRMED_FROM_UPLOADED_LEGISLATION"
+    relevant_articles:
+      deadlines:
+        article: "art. 2º"
+        text_summary: >
+          Prazos são contínuos, excluindo-se o dia do início e incluindo-se o do vencimento.
+        engineering_rule: "Usar na seção de ciência/recurso da minuta."
+      awareness_and_notice:
+        articles:
+          - "art. 4º"
+          - "art. 5º"
+        text_summary: >
+          Ciência dos atos e decisões por meio pessoal, carta, edital e, conforme redações posteriores,
+          comunicação eletrônica.
+        engineering_rule: "Usar como fundamento contextual de ciência/intimação."
+      administrative_decision:
+        article: "art. 36"
+        status: "PENDING_CONFIRMATION_FOR_EXACT_TEXT"
+        text_summary: "Base referida em decisão real para fundamentação administrativa."
+        engineering_rule: "Pode ser citado somente se confirmado no caso/documento ou por texto integral."
+      voluntary_appeal:
+        article: "art. 53"
+        text_summary: "Prevê recurso voluntário à Junta de Recursos Fiscais no prazo de 30 dias da ciência."
+        engineering_rule: "Toda minuta de mérito deve conter seção de ciência e recurso."
+  decree_21066_2000:
+    id: "DEC_21066_2000"
+    name: "Decreto nº 21.066/2000"
+    subject: "Regulamenta a Lei Municipal nº 5.420/1999"
+    status: "CONFIRMED_FROM_UPLOADED_LEGISLATION"
+    relevant_articles:
+      deadlines:
+        article: "art. 3º"
+        text_summary: >
+          Os prazos começam a correr a partir da ciência oficial, excluindo-se o dia do início
+          e incluindo-se o do vencimento.
+        engineering_rule: "Usar como suporte para contagem de prazos na minuta."
+      notice:
+        article: "art. 5º"
+        text_summary: "Ciência dos atos e decisões por notificação ou intimação."
+        engineering_rule: "Usar como suporte para ciência/intimação."
+      process_start:
+        article: "art. 6º"
+        text_summary: "Processo administrativo tributário pode ser iniciado por requerimento da parte interessada ou de ofício."
+        engineering_rule: "Usar como contexto de admissibilidade."
+  appeal_notice:
+    enabled: true
+    mandatory_in_merit_draft: true
+    standard_text: >
+      Dê-se ciência ao contribuinte; o prazo para recurso voluntário à Junta de Recursos Fiscais é de
+      30 dias do recebimento, nos termos dos arts. 2º e 53 da Lei Municipal nº 5.420/1999,
+      com redação da Lei nº 6.164/2006.
+    notes:
+      - "A redação exata deve ser ajustada conforme template oficial da Receita."
+      - "Na POC, a seção de ciência/recurso é obrigatória em minutas de mérito."
+
+# ---------------------------------------------------------------------------
+# 7. NORMAS DE COMPETÊNCIA, PORTARIAS E FUNDAMENTOS INTERNOS
+# ---------------------------------------------------------------------------
+
+internal_authority_rules:
+  status: "PENDING_RECEITA_VALIDATION"
+  description: >
+    Regras de competência, portarias, delegações e fundamentos internos usados na assinatura
+    ou emissão da decisão administrativa.
+  known_references_from_golden_case:
+    - name: "Portaria 2819/2025-GP"
+      status: "PENDING_FULL_TEXT"
+      usage: "Referida no caso-ouro como fundamento da decisão."
+    - name: "Lei nº 7.774/2019"
+      status: "PENDING_FULL_TEXT"
+      usage: "Referida no caso-ouro para competência/admissibilidade."
+    - name: "Decreto nº 25.345/2008"
+      status: "PENDING_FULL_TEXT"
+      usage: "Referido no caso-ouro para admissibilidade."
+  engineering_rule: >
+    Na POC, essas referências podem aparecer como campos parametrizados na minuta somente quando
+    estiverem presentes no processo analisado ou forem confirmadas pela Receita. Caso contrário,
+    não inventar fundamento interno.
+
+# ---------------------------------------------------------------------------
+# 8. REGRAS LEGAIS TRANSFORMADAS EM GUARDRAILS DE ENGENHARIA
+# ---------------------------------------------------------------------------
+
+engineering_guardrails:
+  human_in_the_loop:
+    enabled: true
+    rule: "A IA não emite decisão final vinculante; gera minuta revisável."
+  no_fraud_detection:
+    enabled: true
+    rule: "A POC não avalia autenticidade nem detecta fraude."
+  no_legal_expansion_by_analogy:
+    enabled: true
+    rule: "Por se tratar de isenção tributária, não ampliar benefício por analogia."
+  no_document_hallucination:
+    enabled: true
+    rule: "Não citar documento, valor, página ou fundamento legal que não esteja ancorado em evidência extraída."
+  uncertainty_policy:
+    default_status: "VERIFICAR_MANUALMENTE"
+    rule: "Na dúvida, marcar VERIFICAR; não presumir requisito atendido."
+  property_link_policy:
+    rule: >
+      Vínculo com imóvel é amplo: proprietário, co-proprietário, compromissário, titular de domínio útil,
+      possuidor ou cessionário podem ser aceitos conforme evidência documental.
+  income_policy:
+    rule: >
+      Renda deve considerar renda bruta mensal e agregação de todas as fontes identificadas.
+      Fontes não documentadas disparam VERIFICAR, não deferimento automático.
+  multiple_inscriptions_policy:
+    rule: >
+      Múltiplas inscrições, blocos ou sub-blocos devem ser sinalizados para análise manual na POC.
+      Não indeferir automaticamente.
+  legal_basis_selection_policy:
+    rule: >
+      O decreto aplicável deve ser selecionado por evidência do processo ou vigência confirmada.
+      Se houver dúvida, não citar artigo definitivo.
+
+# ---------------------------------------------------------------------------
+# 9. MAPEAMENTO DE USO NO MOTOR DA POC
+# ---------------------------------------------------------------------------
+
+usage_by_services:
+  DocumentClassificationService:
+    uses:
+      - "regulatory_decrees.items[].name para detectar menções explícitas ao decreto"
+      - "iptu_law.accepted_property_relationship_types para orientar classificação de vínculo"
+  FieldExtractionService:
+    uses:
+      - "benefit_law.engineering_rules.eligible_benefit_types"
+      - "iptu_law.accepted_property_relationship_types"
+      - "regulatory_decrees.selection_strategy"
+  ChecklistAnalysisService:
+    uses:
+      - "regulatory_decrees.items[].article_map"
+      - "iptu_law.relevant_articles.taxpayer"
+      - "engineering_guardrails.uncertainty_policy"
+  ConclusionService:
+    uses:
+      - "engineering_guardrails"
+      - "administrative_tax_process.appeal_notice"
+      - "regulatory_decrees.selection_strategy"
+  DecisionDraftService:
+    uses:
+      - "administrative_tax_process.appeal_notice.standard_text"
+      - "regulatory_decrees.items[].article_map"
+      - "internal_authority_rules"
+      - "engineering_guardrails.no_document_hallucination"
+
+# ---------------------------------------------------------------------------
+# 10. PENDÊNCIAS FORMAIS PARA EVOLUÇÃO PÓS-POC
+# ---------------------------------------------------------------------------
+
+pending_confirmations:
+  high_priority:
+    - id: "PENDING_DEC_34767_FULL_TEXT"
+      description: "Obter texto integral do Decreto nº 34.767/2018."
+      impact: "Necessário para confirmar vigência, artigos e prazos do regime antigo."
+    - id: "PENDING_DEC_42621_FULL_TEXT"
+      description: "Obter texto integral do Decreto nº 42.621/2025."
+      impact: "Necessário para confirmar art. 2º, art. 10, art. 11, art. 12, art. 13 e prazos."
+    - id: "PENDING_DECREE_CUTOFF_DATE"
+      description: "Confirmar data exata de revogação/substituição entre Decreto nº 34.767/2018 e Decreto nº 42.621/2025."
+      impact: "Necessário para seleção automática por vigência."
+    - id: "PENDING_LEI_4158_FULL_TEXT"
+      description: "Obter texto integral da Lei Municipal nº 4.158/1992 e alterações."
+      impact: "Necessário para validação jurídica oficial do benefício."
+    - id: "PENDING_SALARIO_MINIMO_REFERENCE_YEAR"
+      description: "Confirmar se o salário mínimo usado é o do protocolo, exercício pleiteado ou outro marco normativo."
+      impact: "Necessário para conclusão automática por renda."
+  medium_priority:
+    - id: "PENDING_INTERNAL_AUTHORITY_BASIS"
+      description: "Confirmar portarias, delegações e fundamentos internos de competência."
+      impact: "Necessário para minuta em formato oficial de produção."
+    - id: "PENDING_OFFICIAL_TEMPLATE"
+      description: "Confirmar template oficial da decisão administrativa da Receita."
+      impact: "Necessário para padronização final da minuta."

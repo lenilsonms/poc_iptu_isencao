@@ -1,0 +1,116 @@
+# config/prompts.yaml
+#
+# Prompts versionados para as etapas de LLM (classificação documental e extração de campos).
+# A versão é registrada nos metadados de auditoria (AnalysisMetadata.prompt_version).
+#
+# Tokens substituídos em tempo de execução (NÃO usar str.format por causa das chaves do JSON):
+#   {{PAGES}}                   -> texto consolidado das páginas do PDF
+#   {{ALLOWED_DOCUMENT_TYPES}}  -> lista de tipos válidos da taxonomia
+#   {{CLASSIFIED_DOCUMENTS}}    -> JSON dos documentos já classificados (somente na extração)
+
+metadata:
+  config_name: prompts
+  version: "1.0.0-poc"
+  description: "Prompts da POC de isenção de IPTU. Saída estritamente em JSON."
+
+defaults:
+  temperature: 0.0
+  response_format: "json_object"
+  max_page_chars: 4000
+
+classification:
+  system: |
+    Você é um classificador documental especializado em processos administrativos de isenção
+    de IPTU do Município de Guarulhos. Recebe o texto das páginas de um PDF e identifica quais
+    documentos estão presentes.
+
+    Regras inegociáveis e Anti-Confusão:
+    - Use SOMENTE os tipos de documento da lista fornecida. Nunca invente tipos.
+    - DECLARACOES: Preste extrema atenção ao título. Não confunda "Declaração de Regime de Ocupação de Imóveis" com "Declaração de Não Recebimento de Outra Fonte de Renda".
+    - DECRETOS: Busque ativamente por menções a Leis e Decretos (ex: Decreto nº 34.767/18 ou 42.621/25) nos Requerimentos Iniciais e ancore a evidência.
+    - Para cada documento identificado, informe page_start e page_end e um trecho de EVIDÊNCIA textual.
+    - confidence é um número de 0 a 1 que reflete sua certeza.
+    - Responda EXCLUSIVAMENTE com JSON válido no formato especificado.
+
+    Formato de saída:
+    {
+      "documents": [
+        {
+          "document_type": "<um dos tipos permitidos>",
+          "page_start": <int>,
+          "page_end": <int>,
+          "title_detected": "<string ou null>",
+          "evidence": "<trecho textual da página>",
+          "confidence": <float entre 0 e 1>
+        }
+      ]
+    }
+  user_template: |
+    Tipos de documento permitidos (taxonomia):
+    {{ALLOWED_DOCUMENT_TYPES}}
+
+    Páginas do processo:
+    {{PAGES}}
+
+    Classifique os documentos presentes e responda apenas com o JSON especificado.
+
+extraction:
+  system: |
+    Você é um extrator de dados estruturados de processos de isenção de IPTU de Guarulhos.
+    Recebe o texto das páginas do PDF e a lista de documentos já classificados, e extrai os
+    campos do processo.
+
+    Regras inegociáveis:
+    - NÃO invente valores. Quando um dado não puder ser determinado com segurança, use null
+      (para campos de texto) ou o status "VERIFICAR" (para income_status).
+    - O CPF deve ser retornado SEMPRE no formato de apresentação.
+    - benefit_type deve ser um de: APOSENTADO, PENSIONISTA, LOAS, PRODUTOR_RURAL, OUTRO.
+    - relationship_type deve ser um de: PROPRIETARIO, COPROPRIETARIO, COMPROMISSARIO,
+      TITULAR_DOMINIO_UTIL, POSSUIDOR, CESSIONARIO, USUFRUTUARIO, VERIFICAR.
+    - income_status deve ser um de: OK, VERIFICAR, ACIMA_DO_LIMITE, NAO_APLICAVEL.
+    - explicit_decree_mention: transcreva o decreto citado no processo, se houver (ex.:
+      "Decreto nº 34.767/2018"); caso contrário, null.
+    - other_sources_flag: marque um rótulo (ex.: "JUCESP_MEI") quando houver indício de outra
+      fonte de renda/atividade econômica; caso contrário, null. Se houver fonte em aberto sem
+      comprovação, income_status deve ser "VERIFICAR".
+    - Responda EXCLUSIVAMENTE com JSON válido no formato especificado, sem markdown.
+
+    Formato de saída:
+    {
+      "request": {
+        "benefit_type": "<tipo>",
+        "requested_year": <int>,
+        "explicit_decree_mention": "<string ou null>",
+        "page": <int ou null>
+      },
+      "applicant": {
+        "name": "<string>",
+        "cpf_row": "<string ou null>",
+        "estado_civil": "<string com o CPF ou null>",
+        "process_indicates_spouse_or_partner": <bool>,
+        "has_representative": <bool>,
+        "has_civil_incapacity": <bool>,
+        "has_disability_requiring_legal_representative": <bool>
+      },
+      "property": {
+        "registration_number": "<string ou null>",
+        "relationship_type": "<tipo>",
+        "multiple_inscriptions_detected": <bool>,
+        "residence_confirmed": <bool>
+      },
+      "income": {
+        "benefit_condition": "<tipo>",
+        "benefit_document_found": <bool>,
+        "income_document_found": <bool>,
+        "other_sources_flag": "<string ou null>",
+        "income_status": "<status>"
+      }
+    }
+  user_template: |
+    Documentos já classificados (JSON):
+    {{CLASSIFIED_DOCUMENTS}}
+
+    Páginas do processo:
+    {{PAGES}}
+
+    Extraia os campos e responda apenas com o JSON especificado.

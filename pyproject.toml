@@ -1,0 +1,36 @@
+[project]
+name = "poc-iptu-isencao"
+version = "0.1.0"
+description = "POC — Agente de IA para Triagem e Minuta de Isenção de IPTU de Guarulhos (núcleo determinístico)"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.5",
+    "pyyaml>=6.0",
+    "pymupdf>=1.24",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+ocr = [
+    "paddleocr>=2.7",
+]
+llm = [
+    "openai>=1.40",
+]
+ui = [
+    "streamlit>=1.36",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["poc_iptu*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-v"

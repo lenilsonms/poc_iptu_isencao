@@ -1,0 +1,161 @@
+# config/checklist_iptu.yaml
+
+metadata:
+  config_name: checklist_iptu
+  version: "1.0.0-poc"
+  frozen: true
+  frozen_at: "2026-06-23"
+  description: "Checklist documental para POC de isenção de IPTU - aposentados, pensionistas e LOAS."
+
+status_values:
+  - OK
+  - NAO_APRESENTADO
+  - VERIFICAR
+  - NAO_APLICAVEL
+
+items:
+  - code: DOCUMENTO_IDENTIFICACAO
+    label: "Documento de identificação oficial do requerente"
+    required: true
+    required_when: "always"
+    accepted_document_types:
+      - RG
+      - CNH
+      - RNE
+      - CPF
+      - DOCUMENTO_IDENTIFICACAO
+    missing_impacts_conclusion: true
+
+  - code: COMPROVANTE_ESTADO_CIVIL
+    label: "Comprovação de estado civil, união estável ou óbito, quando aplicável"
+    required: false
+    conditional: true
+    required_when: "estado_civil in ['CASADO', 'UNIAO_ESTAVEL', 'VIUVO'] or process_indicates_spouse_or_partner == true"
+    default_when_uncertain: "VERIFICAR"
+    accepted_document_types:
+      - CERTIDAO_CASAMENTO
+      - ESCRITURA_UNIAO_ESTAVEL
+      - CERTIDAO_OBITO
+      - DECLARACAO_UNIAO_ESTAVEL
+      - CPF_CONJUGE_COMPANHEIRO
+    missing_impacts_conclusion: false
+
+  - code: DOCUMENTO_IMOVEL
+    label: "Documento que comprove vínculo com o imóvel"
+    required: true
+    required_when: "always"
+    accepted_document_types:
+      - MATRICULA_IMOVEL
+      - ESCRITURA_PUBLICA
+      - CONTRATO_COMPRA_VENDA
+      - CESSAO_DIREITOS
+      - ESCRITURA_USUFRUTO
+      - DECISAO_JUDICIAL_USUFRUTO
+      - CADASTRO_IMOBILIARIO
+      - CARNE_IPTU
+    temporal_validation:
+      enabled: true
+      rule_by_decree:
+        DEC_34767_2018:
+          status: "PENDING_CONFIRMATION"
+          fallback_if_unclear: "VERIFICAR"
+        DEC_42621_2025:
+          max_days_before_protocol: 30
+          fallback_if_date_missing: "VERIFICAR"
+    legal_basis: "Lei Municipal nº 6.793/2010, art. 7º"
+    missing_impacts_conclusion: true
+
+  - code: CARTA_CONCESSAO_BENEFICIO
+    label: "Carta de concessão do benefício previdenciário ou assistencial"
+    required: true
+    required_when: "benefit_type in ['APOSENTADO', 'PENSIONISTA', 'LOAS']"
+    accepted_document_types:
+      - CARTA_CONCESSAO_BENEFICIO
+      - COMPROVANTE_BENEFICIO_LOAS
+    missing_impacts_conclusion: true
+
+  - code: EXTRATO_RENDIMENTO_FONTE_PAGADORA
+    label: "Extrato atualizado de rendimento da fonte pagadora"
+    required: true
+    required_when: "always"
+    accepted_document_types:
+      - EXTRATO_INSS
+      - EXTRATO_RENDIMENTO_FONTE_PAGADORA
+      - DEMONSTRATIVO_RENDIMENTO_PREVIDENCIARIO
+    not_equivalent_document_types:
+      - CARTA_CONCESSAO_BENEFICIO
+      - EXTRATO_BANCARIO
+    default_if_similar_document_found: "VERIFICAR"
+    missing_impacts_conclusion: true
+
+  - code: COMPROVANTE_RESIDENCIA
+    label: "Comprovante de residência"
+    required: true
+    required_when: "always"
+    accepted_document_types:
+      - CONTA_ENERGIA
+      - CONTA_AGUA
+      - CONTA_TELEFONE
+      - COMPROVANTE_RESIDENCIA
+    temporal_validation:
+      enabled: true
+      rule_by_decree:
+        DEC_34767_2018:
+          status: "NO_MAX_AGE_CONFIRMED_IN_UPLOADED_DECREE"
+          fallback_if_unclear: "VERIFICAR"
+        DEC_42621_2025:
+          status: "PENDING_FULL_DECREE_TEXT"
+          fallback_if_unclear: "VERIFICAR"
+
+  - code: IRPF_OU_DECLARACAO_ISENTO
+    label: "Declaração de IRPF ou declaração de isento"
+    required: true
+    required_when: "always"
+    accepted_document_types:
+      - DECLARACAO_IRPF
+      - RECIBO_IRPF
+      - DECLARACAO_ISENTO_IRPF
+    missing_impacts_conclusion: true
+
+  - code: DECLARACAO_OCUPACAO_IMOVEIS
+    label: "Declaração do regime de ocupação dos imóveis"
+    required: true
+    required_when: "always"
+    accepted_document_types:
+      - DECLARACAO_OCUPACAO_IMOVEIS
+      - DECLARACAO_UNICO_IMOVEL
+    missing_impacts_conclusion: true
+
+  - code: CARNE_IPTU
+    label: "Demonstrativo ou carnê de IPTU"
+    required: true
+    required_when: "always"
+    accepted_document_types:
+      - CARNE_IPTU
+      - ESPELHO_IPTU
+      - DEMONSTRATIVO_IPTU
+    missing_impacts_conclusion: true
+
+  - code: COMPROVANTE_OUTRAS_RENDAS
+    label: "Comprovação de proventos de diversas fontes"
+    required: false
+    conditional: true
+    required_when: "other_income_source_detected == true"
+    trigger_document_types:
+      - JUCESP_FICHA_CADASTRAL
+      - MEI_COMPROVANTE
+      - CONTRATO_SOCIAL
+      - DECLARACAO_IRPF_COM_RENDA_EMPRESARIAL
+    default_when_triggered_and_missing: "VERIFICAR"
+    missing_impacts_conclusion: false
+
+  - code: PROCURACAO
+    label: "Procuração e documento do representante"
+    required: false
+    conditional: true
+    required_when: "has_representative == true or applicant_has_civil_incapacity == true or applicant_has_disability_requiring_legal_representative == true"
+    accepted_document_types:
+      - PROCURACAO
+      - DOCUMENTO_IDENTIFICACAO_REPRESENTANTE
+    default_when_missing_if_required: "NAO_APRESENTADO"
+    missing_impacts_conclusion: true

@@ -1,0 +1,13 @@
+# Núcleo determinístico e Leitura
+pydantic>=2.5
+pyyaml>=6.0
+pymupdf
+streamlit
+pydantic
+pyyaml
+openai
+
+paddlepaddle==3.0.0
+paddleocr==3.0.1
+pillow
+numpy

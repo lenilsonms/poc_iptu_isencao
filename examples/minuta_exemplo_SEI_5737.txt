@@ -1,0 +1,66 @@
+DECISÃO ADMINISTRATIVA DE 1ª INSTÂNCIA
+
+PAT: 1101.2023/0005737-8
+Assunto: Isenção de IPTU – Aposentados, Pensionistas e Beneficiários do LOAS
+Requerente: MIGUEL ANGEL CAMACHO VISCARRA | CPF: ***.***.***-** | Inscrição Imobiliária: 111.62.26.0166.01.000
+Exercício: 2024
+
+I. RELATÓRIO
+Trata-se de pedido de isenção de IPTU referente ao exercício de 2024, apresentado por MIGUEL ANGEL CAMACHO VISCARRA, analisado sob a égide da Lei Municipal nº 4.158/1992 e do regime regulamentar aplicável ao processo, em especial o Decreto nº 34.767/2018.
+
+II. ADMISSIBILIDADE
+Foram analisados os elementos de qualificação do requerente, sua legitimidade, a representação (quando aplicável) e o vínculo com o imóvel, qualificado como PROPRIETARIO. Registra-se a detecção de múltiplas inscrições imobiliárias, recomendando-se a conferência manual da inscrição efetivamente pleiteada. Os achados constam da tabela de rastreabilidade.
+
+III. ANÁLISE DOCUMENTAL E MATERIAL
+A documentação apresentada foi confrontada com o checklist parametrizado para o regime legal aplicável. Foram identificados os seguintes status:
+
+- Documento de identificação oficial do requerente: Regular — página 3 do PDF
+- Comprovação de estado civil, união estável ou óbito, quando aplicável: Não aplicável
+- Documento que comprove vínculo com o imóvel: Regular — página 5 do PDF
+- Carta de concessão do benefício previdenciário ou assistencial: Regular — página 7 do PDF
+- Extrato atualizado de rendimento da fonte pagadora: A verificar — página 7 do PDF
+- Comprovante de residência: Não apresentado
+- Declaração de IRPF ou declaração de isento: Regular — página 13 do PDF
+- Declaração do regime de ocupação dos imóveis: Regular — página 14 do PDF
+- Demonstrativo ou carnê de IPTU: Regular — página 15 do PDF
+- Comprovação de proventos de diversas fontes: A verificar
+- Procuração e documento do representante: Não aplicável
+
+IV. CONCLUSÃO SUGERIDA
+Sugere-se o INDEFERIMENTO do pedido, em razão das pendências documentais e/ou requisitos não atendidos apontados nesta análise.
+
+Fundamento normativo utilizado: Decreto nº 34.767/2018, art. 3º; Decreto nº 34.767/2018, art. 7º.
+
+Documento(s) obrigatório(s) não apresentado(s): COMPROVANTE_RESIDENCIA.
+
+Itens a verificar: EXTRATO_RENDIMENTO_FONTE_PAGADORA, COMPROVANTE_OUTRAS_RENDAS.
+
+V. CIÊNCIA E RECURSO
+Dê-se ciência ao contribuinte; da decisão de primeira instância cabe recurso voluntário à Junta de Recursos Fiscais, no prazo de 30 dias contados da ciência, nos termos do art. 53 da Lei Municipal nº 5.420/1999, com redação da Lei nº 6.164/2006.
+
+VI. RASTREABILIDADE
+Itens verificados (código | status | página | evidência):
+
+- DOCUMENTO_IDENTIFICACAO | Regular | pág. 3 | RG do requerente localizado.
+- COMPROVANTE_ESTADO_CIVIL | Não aplicável | — | —
+- DOCUMENTO_IMOVEL | Regular | pág. 5 | Matrícula do imóvel inscrição 111.62.26.0166.01.000.
+- CARTA_CONCESSAO_BENEFICIO | Regular | pág. 7 | Carta de concessão de aposentadoria do INSS.
+- EXTRATO_RENDIMENTO_FONTE_PAGADORA | A verificar | pág. 7 | Carta de concessão de aposentadoria do INSS.
+- COMPROVANTE_RESIDENCIA | Não apresentado | — | —
+- IRPF_OU_DECLARACAO_ISENTO | Regular | pág. 13 | Declaração de isento de IRPF.
+- DECLARACAO_OCUPACAO_IMOVEIS | Regular | pág. 14 | Declaração do regime de ocupação dos imóveis.
+- CARNE_IPTU | Regular | pág. 15 | Carnê de IPTU do exercício.
+- COMPROVANTE_OUTRAS_RENDAS | A verificar | — | —
+- PROCURACAO | Não aplicável | — | —
+
+Parâmetros da análise:
+- ID da análise: 08ecc3ee-9bdc-4408-bc29-39752daa3cb7
+- Data/hora (UTC): 2026-06-24T00:44:38.752979+00:00
+- Versões de configuração: legal_references 1.2.0-poc-p0-fixes; business_rules 1.2.0-poc-p0-fixes; checklist 1.0.0-poc
+- LLM: azure-openai(fake)/gpt-4o(fake) | OCR: noop
+- Fundamento aplicado: Decreto nº 34.767/2018
+- Semântica de página: PDF_PAGE
+- Política de PII: CPF mascarado em UI/minuta/logs; CPF bruto restrito a uso interno controlado.
+- Páginas do PDF: 5 (processadas por OCR: 0)
+
+Observação: esta minuta foi gerada por assistente de IA e deve ser revisada pela autoridade competente antes de qualquer ato oficial.

@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  poc-iptu-app:
+    build: .
+    container_name: poc_iptu_streamlit
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - ./config:/app/config
+      - ./poc_iptu:/app/poc_iptu
+    restart: always

@@ -1,0 +1,40 @@
+# config/conclusion_mapping.yaml
+
+metadata:
+  config_name: conclusion_mapping
+  version: "1.1.0-poc-legal-review"
+  frozen: false
+  frozen_at: null
+
+states:
+  INDEFERIMENTO_SUGERIDO:
+    display_label: "Indeferimento sugerido"
+    draft_text: "Sugere-se o INDEFERIMENTO do pedido, em razão das pendências documentais e/ou requisitos não atendidos apontados nesta análise."
+    generate_merit_draft: true
+
+  APTO_PARA_ANALISE_DE_DEFERIMENTO:
+    display_label: "Apto para análise de deferimento"
+    draft_text: "O pedido encontra-se regularmente instruído quanto aos itens verificados pela POC, ficando apto à análise de deferimento pela autoridade competente."
+    generate_merit_draft: true
+
+  VERIFICAR_MANUALMENTE:
+    display_label: "Verificação manual necessária"
+    draft_text: "O pedido requer verificação manual dos pontos indicados antes da emissão da decisão administrativa."
+    generate_merit_draft: true
+
+  FORA_DO_ESCOPO_POC:
+    display_label: "Fora do escopo da POC"
+    draft_text: "O tipo de pedido identificado está fora do escopo da POC."
+    generate_merit_draft: false
+
+mandatory_sections:
+  - RELATORIO
+  - ADMISSIBILIDADE
+  - ANALISE_DOCUMENTAL
+  - CONCLUSAO
+  - CIENCIA_E_RECURSO
+  - RASTREABILIDADE
+
+appeal_notice:
+  enabled: true
+  text: "Dê-se ciência ao contribuinte; da decisão de primeira instância cabe recurso voluntário à Junta de Recursos Fiscais, no prazo de 30 dias contados da ciência, nos termos do art. 53 da Lei Municipal nº 5.420/1999, com redação da Lei nº 6.164/2006."

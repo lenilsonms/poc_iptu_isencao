@@ -1,0 +1,210 @@
+# config/business_rules.yaml
+
+metadata:
+  config_name: business_rules
+  version: "1.2.0-poc-p0-fixes"
+  frozen: false
+  frozen_at: null
+  depends_on:
+    legal_references_version: "1.2.0-poc-p0-fixes"
+  changelog:
+    - "1.2.0-poc-p0-fixes: adicionada seção conclusion_resolution com tabela de precedência ordenada e explícita."
+    - "1.2.0-poc-p0-fixes: summary_denial do Decreto 42.621/2025 marcado como enabled=false (autoridade de indeferimento de plano PENDING_CONFIRMATION); rebaixa para VERIFICAR_MANUALMENTE."
+  description: "Regras determinísticas da POC de isenção de IPTU."
+
+conclusion_states:
+  canonical:
+    - INDEFERIMENTO_SUGERIDO
+    - APTO_PARA_ANALISE_DE_DEFERIMENTO
+    - VERIFICAR_MANUALMENTE
+    - FORA_DO_ESCOPO_POC
+
+confidence_policy:
+  minimum_confidence_for_ok: 0.70
+  minimum_confidence_for_page_reference: 0.70
+  below_threshold_status: "VERIFICAR"
+  require_evidence_anchor: true
+  rule: "Nenhuma página do PDF pode ser citada na minuta sem evidência textual ancorada."
+
+scope:
+  allowed_benefit_types:
+    - APOSENTADO
+    - PENSIONISTA
+    - LOAS
+  out_of_scope_benefit_types:
+    - PRODUTOR_RURAL
+    - OUTRO
+  out_of_scope_result: "FORA_DO_ESCOPO_POC"
+
+income_limit:
+  unit: "SALARIO_MINIMO"
+  multiplier: 5
+  basis: "RENDA_BRUTA_MENSAL"
+  aggregate_all_sources: true
+  requires_confirmation: false
+  status_if_income_document_missing: "VERIFICAR"
+  status_if_other_source_undocumented: "VERIFICAR"
+  status_if_income_above_limit: "INDEFERIMENTO_SUGERIDO"
+  salario_minimo_por_ano:
+    2023: 1320.00
+    2024: 1412.00
+    2025: 1518.00
+  reference_year_strategy:
+    priority:
+      - "regulatory_decree_rule"
+      - "protocol_year"
+      - "requested_year"
+      - "fallback_verify_manually"
+
+property_link:
+  accepted_relationship_types:
+    - PROPRIETARIO
+    - COPROPRIETARIO
+    - COMPROMISSARIO
+    - TITULAR_DOMINIO_UTIL
+    - POSSUIDOR
+    - CESSIONARIO
+    - USUFRUTUARIO
+  uncertain_relationship_status: "VERIFICAR"
+  missing_relationship_status: "NAO_APRESENTADO"
+  automatic_denial_when_not_owner: false
+  legal_basis: "Lei Municipal nº 6.793/2010, art. 7º"
+  rule: "Não indeferir automaticamente por ausência de matrícula em nome do requerente."
+
+multiple_properties:
+  automatic_denial: false
+  if_more_than_one_property_and_residence_confirmed:
+    status: "OK"
+    rule: "O benefício pode recair sobre o imóvel em que o beneficiário reside."
+  if_more_than_one_property_and_residence_not_confirmed:
+    status: "VERIFICAR"
+    rule: "Havendo mais de um imóvel, exigir evidência de que o imóvel pleiteado é o imóvel de residência."
+
+document_sufficiency:
+  similar_document_does_not_satisfy_required_item: true
+  examples:
+    - required: "EXTRATO_RENDIMENTO_FONTE_PAGADORA"
+      not_sufficient:
+        - "CARTA_CONCESSAO_BENEFICIO"
+        - "EXTRATO_BANCARIO"
+    - required: "COMPROVANTE_RESIDENCIA"
+      not_sufficient:
+        - "CADASTRO_IMOBILIARIO_SEM_COMPROVANTE_RECENTE"
+
+summary_denial:
+  if_any_required_document_missing: true
+  status: "INDEFERIMENTO_SUGERIDO"
+  allow_only_when_missing_is_objective: true
+  applies_only_when_legal_regime_allows_summary_denial: true
+  legal_regime_rules:
+    DEC_34767_2018:
+      enabled: true
+      legal_basis: "Decreto nº 34.767/2018, art. 7º"
+    DEC_42621_2025:
+      enabled: false
+      status: "PENDING_CONFIRMATION"
+      legal_basis: null
+      note: >
+        A autoridade de indeferimento de plano sob o Decreto nº 42.621/2025 ainda não foi
+        confirmada por texto normativo integral (summary_denial = PENDING_CONFIRMATION em
+        legal_references). O art. 5º desse decreto trata de documento/declaração FALSA, não
+        de ausência de documento obrigatório, e portanto não fundamenta indeferimento de
+        plano por documento ausente. Enquanto não confirmado, documento obrigatório ausente
+        sob este regime rebaixa para VERIFICAR_MANUALMENTE em vez de INDEFERIMENTO_SUGERIDO.
+
+# ---------------------------------------------------------------------------
+# TABELA DE PRECEDÊNCIA DA CONCLUSÃO (P0)
+# Resolução determinística do estado canônico de conclusão.
+# Avaliada de cima para baixo; a PRIMEIRA regra cuja condição é satisfeita
+# define o estado. A ordem é normativa para o ConclusionResolver.
+# ---------------------------------------------------------------------------
+
+conclusion_resolution:
+  description: >
+    Motor de precedência da conclusão. A ordem das regras é parte do contrato: documento
+    obrigatório ausente (R3) tem precedência sobre verificação manual (R4). É essa
+    precedência que reproduz o resultado do caso-ouro SEI 1101.2023/0005737-8.
+
+  ordered_rules:
+    - id: "R1_FORA_DO_ESCOPO"
+      order: 1
+      condition: "request.benefit_type in scope.out_of_scope_benefit_types"
+      conclusion: "FORA_DO_ESCOPO_POC"
+      generate_merit_draft: false
+      main_reason: "Tipo de pedido fora do escopo da POC."
+
+    - id: "R0_REGIME_NAO_IDENTIFICADO"
+      order: 2
+      condition: "selected_regime is None"
+      conclusion: "VERIFICAR_MANUALMENTE"
+      main_reason: "Regime regulamentador não identificado com segurança."
+      note: "Sem regime confirmado não é possível ancorar fundamento normativo definitivo."
+
+    - id: "R2_RENDA_ACIMA_DO_LIMITE"
+      order: 3
+      condition: "income.income_status == 'ACIMA_DO_LIMITE'"
+      conclusion: "INDEFERIMENTO_SUGERIDO"
+      legal_basis_from:
+        - "regime.article_map.other_income_sources"
+      main_reason: "Renda bruta mensal total acima do limite de 5 salários mínimos."
+
+    - id: "R3_DOCUMENTO_OBRIGATORIO_AUSENTE"
+      order: 4
+      condition: "exists checklist item where required == true and status == 'NAO_APRESENTADO'"
+      requires_regime_summary_denial_confirmed: true
+      conclusion: "INDEFERIMENTO_SUGERIDO"
+      legal_basis_from:
+        - "regime.article_map.summary_denial"
+      fallback_when_summary_denial_not_confirmed: "VERIFICAR_MANUALMENTE"
+      main_reason: "Documento(s) obrigatório(s) não apresentado(s); indeferimento de plano."
+      notes:
+        - "Indeferimento de plano só é permitido quando o regime confirma a autoridade de summary_denial (legal_regime_rules[regime].enabled == true)."
+        - "Sob o Decreto 42.621/2025 (enabled=false), rebaixa para VERIFICAR_MANUALMENTE."
+
+    - id: "R4_VERIFICACAO_MANUAL"
+      order: 5
+      condition: "exists checklist item where status == 'VERIFICAR' OR income.income_status == 'VERIFICAR'"
+      conclusion: "VERIFICAR_MANUALMENTE"
+      main_reason: "Há itens que exigem verificação manual antes da decisão."
+
+    - id: "R5_APTO"
+      order: 6
+      condition: "all required checklist items == 'OK' AND income.income_status == 'OK'"
+      conclusion: "APTO_PARA_ANALISE_DE_DEFERIMENTO"
+      main_reason: "Pedido regularmente instruído quanto aos itens verificados pela POC."
+
+  legal_basis_augmentation:
+    description: >
+      Artigos agregados ao fundamento conforme condições presentes, INDEPENDENTEMENTE da
+      regra que definiu o estado. É o mecanismo que adiciona o art. 3º (outras fontes) ao
+      fundamento do caso-ouro, somado ao art. 7º (indeferimento de plano) vindo de R3.
+    rules:
+      - id: "AUG_OUTRAS_FONTES_EM_ABERTO"
+        when: "income.other_sources_flag is set AND income.income_status in ['VERIFICAR','ACIMA_DO_LIMITE']"
+        add_basis_from: "regime.article_map.other_income_sources"
+        rationale: "Há fonte de renda em aberto; cita-se o dispositivo de proventos de diversas fontes."
+
+  non_determinant_warnings:
+    description: "Sinais que geram alerta mas NÃO alteram o estado (precedência menor que R3)."
+    rules:
+      - id: "WARN_MULTIPLAS_INSCRICOES"
+        when: "property.multiple_inscriptions_detected == true"
+        warning: "Múltiplas inscrições detectadas; recomenda-se conferência manual da inscrição pleiteada."
+
+manual_review:
+  trigger_status: "VERIFICAR_MANUALMENTE"
+  triggers:
+    - "confidence_below_threshold"
+    - "unclear_income"
+    - "undocumented_other_income_source"
+    - "uncertain_property_link"
+    - "multiple_inscriptions_detected"
+    - "document_type_ambiguous"
+    - "regulatory_decree_not_identified"
+
+audit:
+  record_config_versions: true
+  record_prompt_versions: true
+  record_model_name: true
+  record_timestamp: true
+  record_input_file_hash: true

@@ -28,9 +28,10 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copia o código da aplicação e as pastas de configuração estruturadas
 COPY config/ ./config/
 COPY poc_iptu/ ./poc_iptu/
+COPY frontend/ ./frontend/
 
 # Expõe a porta nativa do Streamlit
 EXPOSE 8501
 
 # Comando para rodar a aplicação mapeando porta e endereço corretos para o container
-CMD ["streamlit", "run", "poc_iptu/app/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["uvicorn", "poc_iptu.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

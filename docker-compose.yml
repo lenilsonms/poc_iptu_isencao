@@ -5,10 +5,11 @@ services:
     build: .
     container_name: poc_iptu_streamlit
     ports:
-      - "8501:8501"
+      - "8000:8000"
     env_file:
       - .env
     volumes:
       - ./config:/app/config
       - ./poc_iptu:/app/poc_iptu
+      - ./frontend:/app/frontend
     restart: always

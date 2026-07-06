@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Triagem IPTU — Isenção | Guarulhos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  /* ── Reset & Tokens ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:       #0f2044;
+    --navy-mid:   #1a3260;
+    --navy-light: #2a4a85;
+    --gold:       #c8973a;
+    --gold-light: #f0b84a;
+    --bg:         #f4f6fb;
+    --surface:    #ffffff;
+    --surface-2:  #f8f9fc;
+    --border:     #e2e8f0;
+    --border-2:   #cbd5e1;
+    --text-primary:   #0f172a;
+    --text-secondary: #475569;
+    --text-muted:     #94a3b8;
+
+    --green:      #059669;
+    --green-bg:   #ecfdf5;
+    --green-border:#a7f3d0;
+    --red:        #dc2626;
+    --red-bg:     #fef2f2;
+    --red-border: #fecaca;
+    --amber:      #d97706;
+    --amber-bg:   #fffbeb;
+    --amber-border:#fde68a;
+    --slate:      #64748b;
+    --slate-bg:   #f8fafc;
+    --slate-border:#e2e8f0;
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,.10), 0 4px 8px rgba(0,0,0,.04);
+    --font: 'Inter', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--navy);
+    color: #fff;
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .header-logo {
+    width: 36px;
+    height: 36px;
+    background: var(--gold);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .header-title { font-size: 15px; font-weight: 600; letter-spacing: .01em; }
+  .header-subtitle { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .badge-env {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .badge-env.live { background: rgba(5,150,105,.25); color: #6ee7b7; border: 1px solid rgba(5,150,105,.4); }
+  .badge-env.demo { background: rgba(217,119,6,.25); color: #fcd34d; border: 1px solid rgba(217,119,6,.4); }
+  .header-user { font-size: 13px; color: #94a3b8; }
+
+  /* ── Layout ── */
+  .layout {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .sidebar-section { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .sidebar-section:last-child { border-bottom: none; margin-bottom: 0; }
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  .sidebar-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .sidebar-item:last-child { margin-bottom: 0; }
+  .sidebar-key { font-size: 12px; color: var(--text-secondary); }
+  .sidebar-val { font-size: 12px; font-weight: 500; color: var(--text-primary); text-align: right; max-width: 120px; word-break: break-all; }
+  .sidebar-nav { padding: 0; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-left: 3px solid transparent;
+    transition: all .15s;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text-primary); }
+  .nav-item.active { background: #eff4ff; color: var(--navy-mid); border-left-color: var(--navy-mid); font-weight: 600; }
+  .nav-icon { font-size: 16px; }
+
+  .disclaimer {
+    margin-top: auto;
+    padding: 16px 20px;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Main ── */
+  .main {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .page-title { font-size: 22px; font-weight: 700; color: var(--navy); }
+  .page-desc { font-size: 13px; color: var(--text-secondary); margin-top: 4px; line-height: 1.5; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all .15s;
+    font-family: var(--font);
+  }
+  .btn-primary {
+    background: var(--navy-mid);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--navy); }
+  .btn-outline {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-2);
+  }
+  .btn-outline:hover { background: var(--bg); color: var(--text-primary); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .btn-ghost:hover { background: var(--bg); }
+  .btn-danger {
+    background: var(--red-bg);
+    color: var(--red);
+    border: 1px solid var(--red-border);
+  }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-lg { padding: 12px 24px; font-size: 14px; }
+
+  /* ── Upload Card ── */
+  .upload-card {
+    background: var(--surface);
+    border: 2px dashed var(--border-2);
+    border-radius: var(--radius-lg);
+    padding: 48px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .upload-card:hover, .upload-card.drag-over {
+    border-color: var(--navy-light);
+    background: #f0f5ff;
+  }
+  .upload-icon { font-size: 48px; }
+  .upload-title { font-size: 17px; font-weight: 600; color: var(--navy); }
+  .upload-desc { font-size: 13px; color: var(--text-secondary); max-width: 400px; line-height: 1.6; }
+  .upload-hint { font-size: 11px; color: var(--text-muted); }
+  #file-input { display: none; }
+
+  .upload-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+  }
+  .field-group { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .field-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .field-input {
+    padding: 9px 13px;
+    border: 1px solid var(--border-2);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: var(--font);
+    color: var(--text-primary);
+    background: var(--surface);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .field-input:focus { border-color: var(--navy-light); box-shadow: 0 0 0 3px rgba(42,74,133,.1); }
+  .file-selected {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .file-icon { font-size: 28px; }
+  .file-name { font-size: 13px; font-weight: 600; }
+  .file-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .file-remove { margin-left: auto; cursor: pointer; color: var(--text-muted); font-size: 18px; line-height: 1; }
+  .file-remove:hover { color: var(--red); }
+
+  /* ── Progress / Loading ── */
+  .analysis-progress {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 36px 32px;
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .analysis-progress.visible { display: flex; }
+  .progress-title { font-size: 16px; font-weight: 600; color: var(--navy); }
+  .progress-steps { display: flex; flex-direction: column; gap: 12px; }
+  .progress-step {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    transition: all .3s;
+  }
+  .progress-step.done { color: var(--green); }
+  .progress-step.active { color: var(--navy); font-weight: 500; }
+  .step-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--border-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    transition: all .3s;
+  }
+  .progress-step.done .step-dot { background: var(--green); border-color: var(--green); color: #fff; }
+  .progress-step.active .step-dot {
+    border-color: var(--navy-mid);
+    border-width: 2px;
+    animation: pulse-ring .8s ease infinite;
+  }
+  @keyframes pulse-ring {
+    0%   { box-shadow: 0 0 0 0 rgba(26,50,96,.4); }
+    70%  { box-shadow: 0 0 0 6px rgba(26,50,96,0); }
+    100% { box-shadow: 0 0 0 0 rgba(26,50,96,0); }
+  }
+  .progress-bar-wrap { background: var(--border); border-radius: 4px; height: 4px; overflow: hidden; }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--navy-mid), var(--gold));
+    border-radius: 4px;
+    transition: width .4s ease;
+  }
+
+  /* ── Conclusion Banner ── */
+  .conclusion-banner {
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: var(--shadow-md);
+  }
+  .conclusion-banner.apto     { background: var(--green-bg); border: 1.5px solid var(--green-border); }
+  .conclusion-banner.indeferir{ background: var(--red-bg);   border: 1.5px solid var(--red-border);   }
+  .conclusion-banner.verificar{ background: var(--amber-bg); border: 1.5px solid var(--amber-border); }
+  .conclusion-banner.fora     { background: var(--slate-bg); border: 1.5px solid var(--slate-border); }
+  .banner-icon { font-size: 40px; flex-shrink: 0; }
+  .banner-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .banner-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .banner-reason { font-size: 13px; line-height: 1.6; }
+  .banner-legal { font-size: 11px; margin-top: 8px; opacity: .75; }
+  .conclusion-banner.apto      .banner-label,
+  .conclusion-banner.apto      .banner-title  { color: var(--green); }
+  .conclusion-banner.indeferir .banner-label,
+  .conclusion-banner.indeferir .banner-title  { color: var(--red); }
+  .conclusion-banner.verificar .banner-label,
+  .conclusion-banner.verificar .banner-title  { color: var(--amber); }
+  .conclusion-banner.fora      .banner-label,
+  .conclusion-banner.fora      .banner-title  { color: var(--slate); }
+  .banner-actions { margin-left: auto; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+
+  /* ── Metric Cards ── */
+  .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .metric-label { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .metric-value { font-size: 22px; font-weight: 700; color: var(--navy); line-height: 1.1; }
+  .metric-sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .metric-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 6px;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--navy); display: flex; align-items: center; gap: 8px; }
+  .card-body { padding: 24px; }
+
+  /* ── Checklist Table ── */
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-chip {
+    padding: 5px 13px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border-2);
+    background: var(--surface);
+    color: var(--text-secondary);
+    transition: all .15s;
+  }
+  .filter-chip:hover { background: var(--bg); }
+  .filter-chip.active { background: var(--navy-mid); color: #fff; border-color: var(--navy-mid); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  tbody td { padding: 12px 14px; font-size: 13px; vertical-align: middle; }
+  td.item-name { font-weight: 500; color: var(--text-primary); }
+  td.item-evidence { color: var(--text-secondary); font-size: 12px; max-width: 280px; }
+  td.item-page { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .tag-ok      { background: var(--green-bg);  color: var(--green); border: 1px solid var(--green-border); }
+  .tag-missing { background: var(--red-bg);    color: var(--red);   border: 1px solid var(--red-border); }
+  .tag-verify  { background: var(--amber-bg);  color: var(--amber); border: 1px solid var(--amber-border); }
+  .tag-na      { background: var(--slate-bg);  color: var(--slate); border: 1px solid var(--slate-border); }
+  .tag-required{ background: #eff4ff; color: var(--navy-mid); border: 1px solid #c7d7f5; }
+
+  /* ── Draft ── */
+  .draft-box {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.8;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  /* ── Audit Trail ── */
+  .audit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 32px; }
+  .audit-row { display: flex; flex-direction: column; gap: 3px; }
+  .audit-key { font-size: 11px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
+  .audit-val { font-size: 12.5px; color: var(--text-primary); font-family: var(--mono); }
+
+  /* ── Alerts ── */
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .alert-icon { flex-shrink: 0; font-size: 16px; }
+  .alert-danger  { background: var(--red-bg);   border: 1px solid var(--red-border);   color: #991b1b; }
+  .alert-warning { background: var(--amber-bg); border: 1px solid var(--amber-border); color: #92400e; }
+
+  /* ── Empty / Upload states ── */
+  #upload-section, #result-section { transition: opacity .2s; }
+  #result-section { display: none; }
+
+  /* ── Collapsible ── */
+  .collapsible-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .collapsible-header .chevron { font-size: 14px; transition: transform .2s; color: var(--text-muted); }
+  .collapsible-header.open .chevron { transform: rotate(180deg); }
+  .collapsible-body { overflow: hidden; transition: max-height .3s ease; }
+
+  /* ── Toast ── */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 999; }
+  .toast {
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn .25s ease;
+    max-width: 300px;
+  }
+  @keyframes slideIn { from { transform: translateY(12px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+
+  /* ── Demo toggle ── */
+  .demo-bar {
+    background: linear-gradient(90deg, var(--navy) 0%, var(--navy-mid) 100%);
+    color: #fff;
+    padding: 10px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .demo-bar span { opacity: .7; }
+  .demo-btn {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,.3);
+    background: rgba(255,255,255,.1);
+    color: #fff;
+    transition: all .15s;
+  }
+  .demo-btn:hover { background: rgba(255,255,255,.2); }
+  .demo-btn.active { background: var(--gold); border-color: var(--gold); color: var(--navy); }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .metrics-row { grid-template-columns: 1fr 1fr; }
+    .main { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-brand">
+    <div class="header-logo">🏛️</div>
+    <div>
+      <div class="header-title">Sistema de Triagem — Isenção de IPTU</div>
+      <div class="header-subtitle">Prefeitura Municipal de Guarulhos · SEMFI</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="badge-env demo" id="env-badge">● Demo offline</span>
+    <span class="header-user">Analista fiscal</span>
+  </div>
+</header>
+
+<!-- Demo bar -->
+
+<!-- Layout -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Configuração do sistema</div>
+      <div class="sidebar-item">
+        <span class="sidebar-key">Provedor LLM</span>
+        <span class="sidebar-val" id="sb-provider">OpenAI</span>
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-key">Modelo</span>
+        <span class="sidebar-val" id="sb-model">gpt-4o-mini</span>
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-key">Versão prompts</span>
+        <span class="sidebar-val" id="sb-prompts">v1.2.0</span>
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-key">OCR</span>
+        <span class="sidebar-val" id="sb-ocr">llm-vision</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Regime legal</div>
+      <div class="sidebar-item">
+        <span class="sidebar-key">Decreto</span>
+        <span class="sidebar-val">42.621/2025</span>
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-key">Vigência</span>
+        <span class="sidebar-val">01/01/2025 →</span>
+      </div>
+      <div class="sidebar-item">
+        <span class="sidebar-key">Indeferimento sumário</span>
+        <span class="sidebar-val">Habilitado</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="setNav(this)"><span class="nav-icon">📋</span> Análise de processo</div>
+      <div class="nav-item" onclick="setNav(this)"><span class="nav-icon">📂</span> Histórico</div>
+      <div class="nav-item" onclick="setNav(this)"><span class="nav-icon">📊</span> Relatórios</div>
+      <div class="nav-item" onclick="setNav(this)"><span class="nav-icon">⚙️</span> Configurações</div>
+    </nav>
+    <div class="disclaimer">
+      ⚖️ A IA não decide. O núcleo determinístico <strong>sugere</strong> a conclusão; a autoridade competente revisa e homologa.
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">Análise de processo SEI</div>
+        <div class="page-desc">Faça upload do PDF do processo. A IA lê, classifica e monta o checklist automaticamente.</div>
+      </div>
+      <button class="btn btn-outline" onclick="loadDemo('upload')">+ Nova análise</button>
+    </div>
+
+    <!-- Upload section -->
+    <div id="upload-section">
+      <div class="card" style="overflow:visible; border:none; box-shadow:none; background:transparent;">
+        <div
+          class="upload-card"
+          id="drop-zone"
+          onclick="document.getElementById('file-input').click()"
+          ondragover="handleDragOver(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleDrop(event)"
+        >
+          <div class="upload-icon">📄</div>
+          <div class="upload-title">Arraste o PDF do processo aqui</div>
+          <div class="upload-desc">Ou clique para selecionar o arquivo. O sistema aceita processos SEI completos em PDF, incluindo digitalizações.</div>
+          <div class="upload-hint">PDF · Tamanho máximo 50 MB</div>
+        </div>
+        <input type="file" id="file-input" accept=".pdf" onchange="handleFileSelect(event)"/>
+
+        <div id="file-selected-row" style="display:none; margin-top:16px;">
+          <div class="file-selected">
+            <span class="file-icon">📋</span>
+            <div>
+              <div class="file-name" id="file-name-display">—</div>
+              <div class="file-meta" id="file-meta-display">—</div>
+            </div>
+            <span class="file-remove" onclick="removeFile()" title="Remover">✕</span>
+          </div>
+        </div>
+
+        <div class="upload-row" style="margin-top:16px;">
+          <div class="field-group">
+            <label class="field-label" for="process-id">Número do processo (PAT)</label>
+            <input class="field-input" type="text" id="process-id" placeholder="Ex.: SEI-GRU-2025-000123"/>
+          </div>
+          <button class="btn btn-primary btn-lg" id="analyze-btn" onclick="startAnalysis()" disabled>
+            🔍 Analisar processo
+          </button>
+        </div>
+      </div>
+
+      <!-- Analysis progress -->
+      <div class="analysis-progress" id="progress-panel">
+        <div>
+          <div class="progress-title" id="progress-title">Analisando processo…</div>
+          <div style="margin-top:8px;" class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="progress-steps" id="progress-steps">
+          <div class="progress-step" id="step-0"><div class="step-dot">1</div> Lendo e extraindo texto do PDF</div>
+          <div class="progress-step" id="step-1"><div class="step-dot">2</div> Classificando documentos</div>
+          <div class="progress-step" id="step-2"><div class="step-dot">3</div> Extraindo campos estruturados</div>
+          <div class="progress-step" id="step-3"><div class="step-dot">4</div> Montando checklist documental</div>
+          <div class="progress-step" id="step-4"><div class="step-dot">5</div> Aplicando regras e gerando conclusão</div>
+          <div class="progress-step" id="step-5"><div class="step-dot">6</div> Redigindo minuta de decisão</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result section -->
+    <div id="result-section">
+
+      <!-- Conclusion banner -->
+      <div class="conclusion-banner" id="result-banner">
+        <div class="banner-icon" id="banner-icon"></div>
+        <div>
+          <div class="banner-label" id="banner-label"></div>
+          <div class="banner-title" id="banner-title"></div>
+          <div class="banner-reason" id="banner-reason"></div>
+          <div class="banner-legal" id="banner-legal"></div>
+        </div>
+        <div class="banner-actions">
+          <button class="btn btn-primary" onclick="downloadMinuta()">⬇ Baixar minuta</button>
+          <button class="btn btn-outline" onclick="loadDemo('upload')">↩ Nova análise</button>
+        </div>
+      </div>
+
+      <!-- Alerts row -->
+      <div id="alerts-row"></div>
+
+      <!-- Metrics -->
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-label">Requerente</div>
+          <div class="metric-value" style="font-size:15px;" id="m-name">—</div>
+          <div class="metric-sub" id="m-cpf">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Pedido</div>
+          <div class="metric-value" style="font-size:15px;" id="m-benefit">—</div>
+          <div class="metric-sub" id="m-year">Exercício —</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Imóvel</div>
+          <div class="metric-value" style="font-size:13px;" id="m-reg">—</div>
+          <div class="metric-sub" id="m-rel">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Processamento</div>
+          <div class="metric-value" id="m-pages">—</div>
+          <div class="metric-sub" id="m-ocr">páginas com OCR</div>
+        </div>
+      </div>
+
+      <!-- Checklist -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Checklist documental</div>
+          <div class="filter-row" id="filter-row">
+            <div class="filter-chip active" onclick="filterChecklist(this,'all')">Todos</div>
+            <div class="filter-chip" onclick="filterChecklist(this,'OK')">✅ OK</div>
+            <div class="filter-chip" onclick="filterChecklist(this,'NAO_APRESENTADO')">❌ Ausente</div>
+            <div class="filter-chip" onclick="filterChecklist(this,'VERIFICAR')">⚠️ Verificar</div>
+            <div class="filter-chip" onclick="filterChecklist(this,'NAO_APLICAVEL')">➖ N/A</div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table id="checklist-table">
+            <thead>
+              <tr>
+                <th style="width:36px;"></th>
+                <th>Documento</th>
+                <th>Status</th>
+                <th>Pág.</th>
+                <th>Evidência</th>
+                <th>Confiança</th>
+              </tr>
+            </thead>
+            <tbody id="checklist-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Minuta -->
+      <div class="card">
+        <div class="card-header collapsible-header open" id="draft-toggle" onclick="toggleCollapsible('draft-content', this)">
+          <div class="card-title">📝 Minuta de decisão <span style="font-size:11px;font-weight:400;color:var(--text-muted);margin-left:6px;">— revisável pela autoridade competente</span></div>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="collapsible-body" id="draft-content" style="max-height:600px;">
+          <div class="card-body">
+            <div class="draft-box" id="draft-text"></div>
+            <div style="margin-top:12px; display:flex; gap:10px;">
+              <button class="btn btn-primary" onclick="copyDraft()">📋 Copiar minuta</button>
+              <button class="btn btn-outline" onclick="downloadMinuta()">⬇ Baixar .txt</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit -->
+      <div class="card">
+        <div class="card-header collapsible-header" id="audit-toggle" onclick="toggleCollapsible('audit-content', this)">
+          <div class="card-title">🔍 Rastreabilidade e auditoria</div>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="collapsible-body" id="audit-content" style="max-height:0;">
+          <div class="card-body">
+            <div class="audit-grid" id="audit-grid"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /result-section -->
+  </main>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ── Demo data ──────────────────────────────────────────────────────────────
+
+const DEMOS = {
+  apto: {
+    conclusion: {
+      status: 'APTO_PARA_ANALISE_DE_DEFERIMENTO',
+      main_reason: 'Documentação obrigatória apresentada integralmente. Requerente atende aos critérios do art. 4º do Decreto nº 42.621/2025.',
+      missing_required_documents: [],
+      items_to_verify: ['Comprovante de renda do cônjuge — leitura parcial, conferir original'],
+      legal_basis: ['Art. 4º, I, Dec. nº 42.621/2025', 'Art. 7º, Lei nº 6.793/2010'],
+    },
+    request: { benefit_type: 'APOSENTADO', requested_year: 2025 },
+    applicant: { name: 'Maria Aparecida de Souza', cpf_masked: '•••.456.789-••' },
+    property: { registration_number: '3.456.789-0', relationship_type: 'PROPRIETARIO', multiple_inscriptions_detected: false },
+    total_page_count: 34, ocr_page_count: 12,
+    process_id: 'SEI-GRU-2025-004821',
+    checklist: [
+      { label:'Requerimento assinado (formulário padrão)',  required:true,  status:'OK',              page:1,    evidence:'Formulário SEMFI-001 com assinatura autógrafa', confidence:.99 },
+      { label:'RG ou CNH do requerente',                    required:true,  status:'OK',              page:3,    evidence:'RG nº 12.345.678-9 SSP/SP, válido',            confidence:.97 },
+      { label:'CPF do requerente',                          required:true,  status:'OK',              page:3,    evidence:'CPF conferido com o requerimento',              confidence:.99 },
+      { label:'Comprovante de residência (≤ 90 dias)',      required:true,  status:'OK',              page:5,    evidence:'Conta de água SABESP — abr/2025',               confidence:.95 },
+      { label:'Documento de propriedade / vínculo imóvel',  required:true,  status:'OK',              page:7,    evidence:'Escritura pública lavrada no 3º Cartório',       confidence:.98 },
+      { label:'Benefício previdenciário (extrato INSS)',     required:true,  status:'OK',              page:10,   evidence:'Carta de concessão aposentadoria — NB 12345',    confidence:.96 },
+      { label:'Comprovante de renda — titular',             required:true,  status:'OK',              page:12,   evidence:'Holerite INSS R$ 1.412,00 — mai/2025',          confidence:.93 },
+      { label:'Comprovante de renda — cônjuge',             required:false, status:'VERIFICAR',       page:15,   evidence:'Documento ilegível, conferir original',         confidence:.61 },
+      { label:'Declaração de único imóvel',                 required:true,  status:'OK',              page:18,   evidence:'Declaração assinada com firma reconhecida',     confidence:.99 },
+      { label:'Certidão de casamento / estado civil',       required:false, status:'OK',              page:20,   evidence:'Certidão de casamento lavrada em 12/03/1988',   confidence:.98 },
+      { label:'Laudo médico (LOAS / deficiência)',          required:false, status:'NAO_APLICAVEL',   page:null, evidence:null,                                           confidence:1.0  },
+      { label:'Inscrição Cadastral Municipal (IPTU)',       required:true,  status:'OK',              page:2,    evidence:'Insc. 3.456.789-0 confirmada no DAM',           confidence:.99 },
+    ],
+    draft_text: `PREFEITURA MUNICIPAL DE GUARULHOS
+SECRETARIA MUNICIPAL DE FINANÇAS E INFORMAÇÕES — SEMFI
+PROCESSO: SEI-GRU-2025-004821
+
+MINUTA DE DECISÃO — ISENÇÃO DE IPTU
+Exercício: 2025 | Benefício: Aposentado/Pensionista
+
+Com base na análise documental realizada e no disposto no art. 4º, inciso I,
+do Decreto nº 42.621/2025, que regulamenta a Lei Municipal nº 6.793/2010,
+esta Secretaria SUGERE O DEFERIMENTO do pedido de isenção de IPTU formulado
+por MARIA APARECIDA DE SOUZA, inscrita no CPF sob nº •••.456.789-••, referente
+ao imóvel de inscrição cadastral nº 3.456.789-0, exercício 2025.
+
+FUNDAMENTOS:
+I.   A requerente comprovou percepção de benefício previdenciário (aposentadoria)
+     junto ao INSS, conforme Carta de Concessão acostada às fls. 10.
+II.  A renda mensal bruta do titular (R$ 1.412,00) está dentro do limite
+     legalmente estabelecido.
+III. O imóvel está registrado em nome da requerente, conforme escritura pública
+     (fls. 7), e é declarado como único bem imóvel de sua propriedade.
+IV.  O comprovante de residência atesta ocupação efetiva do imóvel.
+
+RESSALVA:
+O comprovante de renda do cônjuge (fls. 15) apresentou leitura parcial.
+Recomenda-se conferência do documento original antes da homologação.
+
+Esta minuta é uma SUGESTÃO do sistema automatizado de triagem.
+A decisão final cabe exclusivamente à autoridade administrativa competente.
+
+Guarulhos, ${new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'})}.
+
+_____________________________________________
+Autoridade Competente (assinar após revisão)`,
+    metadata: {
+      analysis_id: 'ana_20250625_004821_a1b2c3',
+      created_at: new Date().toISOString(),
+      legal_references_version: 'v2025.1',
+      business_rules_version:   'v2025.2',
+      checklist_version:        'v2025.1',
+      prompt_version:            'v1.2.0',
+      llm_provider:              'openai',
+      llm_model:                 'gpt-4o-mini',
+      ocr_engine:                'llm-vision',
+      pii_policy:                'mask-cpf',
+    }
+  },
+
+  indeferir: {
+    conclusion: {
+      status: 'INDEFERIMENTO_SUGERIDO',
+      main_reason: 'Ausência de documentos obrigatórios: comprovante de benefício previdenciário e comprovante de renda do titular. Indeferimento sumário autorizado pelo art. 12 do Decreto nº 42.621/2025.',
+      missing_required_documents: ['Extrato/Carta de concessão INSS', 'Comprovante de renda do titular'],
+      items_to_verify: [],
+      legal_basis: ['Art. 12, Dec. nº 42.621/2025', 'Art. 4º, I, Lei nº 6.793/2010'],
+    },
+    request: { benefit_type: 'APOSENTADO', requested_year: 2025 },
+    applicant: { name: 'João Carlos Ferreira', cpf_masked: '•••.123.456-••' },
+    property: { registration_number: '1.234.567-0', relationship_type: 'PROPRIETARIO', multiple_inscriptions_detected: true },
+    total_page_count: 18, ocr_page_count: 6,
+    process_id: 'SEI-GRU-2025-003102',
+    checklist: [
+      { label:'Requerimento assinado (formulário padrão)',  required:true,  status:'OK',           page:1,  evidence:'Formulário assinado',           confidence:.99 },
+      { label:'RG ou CNH do requerente',                   required:true,  status:'OK',           page:2,  evidence:'RG nº 98.765.432-1 SSP/SP',     confidence:.97 },
+      { label:'CPF do requerente',                         required:true,  status:'OK',           page:2,  evidence:'CPF conferido',                  confidence:.99 },
+      { label:'Comprovante de residência (≤ 90 dias)',     required:true,  status:'OK',           page:4,  evidence:'Conta de luz — mai/2025',        confidence:.95 },
+      { label:'Documento de propriedade / vínculo imóvel', required:true,  status:'OK',           page:6,  evidence:'Escritura registrada',           confidence:.96 },
+      { label:'Benefício previdenciário (extrato INSS)',   required:true,  status:'NAO_APRESENTADO',page:null,evidence:null,                         confidence:1.0 },
+      { label:'Comprovante de renda — titular',            required:true,  status:'NAO_APRESENTADO',page:null,evidence:null,                         confidence:1.0 },
+      { label:'Comprovante de renda — cônjuge',            required:false, status:'NAO_APRESENTADO',page:null,evidence:null,                         confidence:1.0 },
+      { label:'Declaração de único imóvel',                required:true,  status:'NAO_APRESENTADO',page:null,evidence:null,                         confidence:1.0 },
+      { label:'Laudo médico (LOAS / deficiência)',         required:false, status:'NAO_APLICAVEL', page:null,evidence:null,                          confidence:1.0 },
+      { label:'Inscrição Cadastral Municipal (IPTU)',      required:true,  status:'OK',           page:2,  evidence:'Insc. 1.234.567-0',             confidence:.99 },
+    ],
+    draft_text: `PREFEITURA MUNICIPAL DE GUARULHOS
+SECRETARIA MUNICIPAL DE FINANÇAS E INFORMAÇÕES — SEMFI
+PROCESSO: SEI-GRU-2025-003102
+
+MINUTA DE DECISÃO — ISENÇÃO DE IPTU (INDEFERIMENTO SUMÁRIO)
+Exercício: 2025 | Benefício: Aposentado/Pensionista
+
+Com fulcro no art. 12 do Decreto nº 42.621/2025, que autoriza o indeferimento
+sumário por insuficiência documental, esta Secretaria SUGERE O INDEFERIMENTO
+do pedido de isenção de IPTU formulado por JOÃO CARLOS FERREIRA, inscrito no
+CPF sob nº •••.123.456-••, referente ao imóvel de inscrição cadastral
+nº 1.234.567-0, exercício 2025.
+
+MOTIVO:
+A instrução processual se encontra incompleta. Não foram acostados aos autos:
+  a) Extrato ou Carta de Concessão de benefício previdenciário (INSS);
+  b) Comprovante de renda do titular;
+  c) Declaração de único imóvel.
+
+A ausência dos documentos referidos impede a análise de mérito, nos termos
+do art. 12, § 1º, do Decreto nº 42.621/2025.
+
+ATENÇÃO: Foram detectadas múltiplas inscrições cadastrais relacionadas ao
+requerente. Recomenda-se verificação antes da homologação.
+
+O requerente poderá reinstruir o processo dentro do prazo legal, apresentando
+a documentação faltante à SEMFI.
+
+Esta minuta é uma SUGESTÃO do sistema automatizado de triagem.
+A decisão final cabe exclusivamente à autoridade administrativa competente.
+
+Guarulhos, ${new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'})}.
+
+_____________________________________________
+Autoridade Competente (assinar após revisão)`,
+    metadata: {
+      analysis_id: 'ana_20250625_003102_d4e5f6',
+      created_at: new Date().toISOString(),
+      legal_references_version: 'v2025.1',
+      business_rules_version:   'v2025.2',
+      checklist_version:        'v2025.1',
+      prompt_version:            'v1.2.0',
+      llm_provider:              'openai',
+      llm_model:                 'gpt-4o-mini',
+      ocr_engine:                'llm-vision',
+      pii_policy:                'mask-cpf',
+    }
+  },
+
+  verificar: {
+    conclusion: {
+      status: 'VERIFICAR_MANUALMENTE',
+      main_reason: 'Múltiplas inconsistências detectadas: CPF difere entre o requerimento e o RG, e a renda total ultrapassa o limite em 8% — dentro da margem de tolerância, mas requer verificação humana.',
+      missing_required_documents: [],
+      items_to_verify: ['CPF divergente entre documentos — conferir', 'Renda agregada próxima ao limite legal'],
+      legal_basis: ['Art. 4º, I, Dec. nº 42.621/2025'],
+    },
+    request: { benefit_type: 'PENSIONISTA', requested_year: 2025 },
+    applicant: { name: 'Ana Lúcia Rodrigues', cpf_masked: '•••.789.012-••' },
+    property: { registration_number: '7.890.123-0', relationship_type: 'USUFRUTUARIO', multiple_inscriptions_detected: false },
+    total_page_count: 28, ocr_page_count: 14,
+    process_id: 'SEI-GRU-2025-005540',
+    checklist: [
+      { label:'Requerimento assinado (formulário padrão)',  required:true,  status:'OK',       page:1,  evidence:'Formulário assinado',            confidence:.99 },
+      { label:'RG ou CNH do requerente',                   required:true,  status:'VERIFICAR', page:3,  evidence:'CPF no RG difere do requerimento — conferir', confidence:.55 },
+      { label:'CPF do requerente',                         required:true,  status:'VERIFICAR', page:1,  evidence:'CPF digitado diverge do RG',     confidence:.55 },
+      { label:'Comprovante de residência (≤ 90 dias)',     required:true,  status:'OK',       page:5,  evidence:'Conta de gás — mai/2025',         confidence:.94 },
+      { label:'Documento de propriedade / vínculo imóvel', required:true,  status:'OK',       page:7,  evidence:'Instrumento particular de usufruto', confidence:.91 },
+      { label:'Benefício previdenciário (extrato INSS)',   required:true,  status:'OK',       page:10, evidence:'Carta de concessão pensão — NB 67890', confidence:.97 },
+      { label:'Comprovante de renda — titular',            required:true,  status:'VERIFICAR', page:12, evidence:'Renda bruta R$ 2.163 — acima do limite (R$ 2.000)', confidence:.88 },
+      { label:'Comprovante de renda — cônjuge',            required:false, status:'NAO_APLICAVEL',page:null,evidence:null,                        confidence:1.0 },
+      { label:'Declaração de único imóvel',                required:true,  status:'OK',       page:16, evidence:'Declaração assinada',            confidence:.99 },
+      { label:'Laudo médico (LOAS / deficiência)',         required:false, status:'NAO_APLICAVEL',page:null,evidence:null,                        confidence:1.0 },
+      { label:'Inscrição Cadastral Municipal (IPTU)',      required:true,  status:'OK',       page:2,  evidence:'Insc. 7.890.123-0',              confidence:.99 },
+    ],
+    draft_text: `PREFEITURA MUNICIPAL DE GUARULHOS
+SECRETARIA MUNICIPAL DE FINANÇAS E INFORMAÇÕES — SEMFI
+PROCESSO: SEI-GRU-2025-005540
+
+NOTA TÉCNICA — VERIFICAÇÃO MANUAL NECESSÁRIA
+Exercício: 2025 | Benefício: Pensionista
+
+O sistema de triagem automatizado identificou INCONSISTÊNCIAS que impedem
+a geração de conclusão automática. O processo requer análise humana antes
+de qualquer decisão.
+
+REQUERENTE: ANA LÚCIA RODRIGUES
+CPF:        •••.789.012-••
+IMÓVEL:     Inscrição 7.890.123-0 | Vínculo: Usufrutuária
+
+PONTOS DE ATENÇÃO:
+
+1. DIVERGÊNCIA DE CPF
+   O CPF informado no requerimento (campo 4) diverge do número constante
+   no RG apresentado (fls. 3). Antes de qualquer decisão, é necessário
+   identificar o número correto junto à requerente ou via sistema da
+   Receita Federal.
+
+2. RENDA PRÓXIMA AO LIMITE
+   A renda bruta mensal apurada é R$ 2.163,00. O limite legal vigente
+   é de R$ 2.000,00 (2 salários mínimos — Decreto nº 42.621/2025, art. 5º).
+   A diferença de 8,15% pode ser resultado de erro na digitalização do
+   comprovante. Recomenda-se solicitar documento original.
+
+PROVIDÊNCIAS SUGERIDAS:
+  a) Intimar a requerente para sanar a divergência de CPF (prazo 10 dias);
+  b) Solicitar comprovante de renda em via original para conferência.
+
+Esta nota é uma SUGESTÃO do sistema automatizado de triagem.
+A decisão final cabe exclusivamente à autoridade administrativa competente.
+
+Guarulhos, ${new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'})}.
+
+_____________________________________________
+Autoridade Competente (assinar após revisão)`,
+    metadata: {
+      analysis_id: 'ana_20250625_005540_g7h8i9',
+      created_at: new Date().toISOString(),
+      legal_references_version: 'v2025.1',
+      business_rules_version:   'v2025.2',
+      checklist_version:        'v2025.1',
+      prompt_version:            'v1.2.0',
+      llm_provider:              'openai',
+      llm_model:                 'gpt-4o-mini',
+      ocr_engine:                'llm-vision',
+      pii_policy:                'mask-cpf',
+    }
+  }
+};
+
+// ── Render logic ────────────────────────────────────────────────────────────
+
+const CONCLUSION_MAP = {
+  APTO_PARA_ANALISE_DE_DEFERIMENTO: {
+    cls:'apto', icon:'✅', label:'Conclusão sugerida', title:'Apto para análise de deferimento'
+  },
+  INDEFERIMENTO_SUGERIDO: {
+    cls:'indeferir', icon:'❌', label:'Conclusão sugerida', title:'Indeferimento sugerido'
+  },
+  VERIFICAR_MANUALMENTE: {
+    cls:'verificar', icon:'⚠️', label:'Atenção requerida', title:'Verificação manual necessária'
+  },
+  FORA_DO_ESCOPO_POC: {
+    cls:'fora', icon:'ℹ️', label:'Fora do escopo', title:'Processo fora do escopo da POC'
+  },
+};
+
+const STATUS_MAP = {
+  OK:              { tag:'tag-ok',      icon:'✓', label:'OK' },
+  NAO_APRESENTADO: { tag:'tag-missing', icon:'✕', label:'Não apresentado' },
+  VERIFICAR:       { tag:'tag-verify',  icon:'⚠', label:'A verificar' },
+  NAO_APLICAVEL:   { tag:'tag-na',      icon:'—', label:'N/A' },
+};
+
+const BENEFIT_LABEL = {
+  APOSENTADO: 'Aposentado', PENSIONISTA: 'Pensionista',
+  LOAS: 'LOAS', PRODUTOR_RURAL: 'Produtor rural', OUTRO: 'Outro'
+};
+
+const REL_LABEL = {
+  PROPRIETARIO:'Proprietário', COPROPRIETARIO:'Coproprietário',
+  COMPROMISSARIO:'Compromissário', TITULAR_DOMINIO_UTIL:'Titular domínio útil',
+  POSSUIDOR:'Possuidor', CESSIONARIO:'Cessionário',
+  USUFRUTUARIO:'Usufrutuário', VERIFICAR:'A verificar'
+};
+
+let currentData = null;
+
+function renderResult(data) {
+  currentData = data;
+  document.getElementById('upload-section').style.display = 'none';
+  const rs = document.getElementById('result-section');
+  rs.style.display = 'flex';
+  rs.style.flexDirection = 'column';
+  rs.style.gap = '20px';
+
+  // Banner
+  const cm = CONCLUSION_MAP[data.conclusion.status] || CONCLUSION_MAP.FORA_DO_ESCOPO_POC;
+  const banner = document.getElementById('result-banner');
+  banner.className = `conclusion-banner ${cm.cls}`;
+  document.getElementById('banner-icon').textContent = cm.icon;
+  document.getElementById('banner-label').textContent = cm.label;
+  document.getElementById('banner-title').textContent = cm.title;
+  document.getElementById('banner-reason').textContent = data.conclusion.main_reason;
+  const legalEl = document.getElementById('banner-legal');
+  legalEl.textContent = data.conclusion.legal_basis.length
+    ? 'Fundamento: ' + data.conclusion.legal_basis.join(' · ')
+    : '';
+
+  // Alerts
+  const ar = document.getElementById('alerts-row');
+  ar.innerHTML = '';
+  if (data.conclusion.missing_required_documents.length) {
+    const a = document.createElement('div');
+    a.className = 'alert alert-danger';
+    a.innerHTML = `<span class="alert-icon">❌</span><div><strong>Documentos obrigatórios ausentes:</strong> ${data.conclusion.missing_required_documents.join(' · ')}</div>`;
+    ar.appendChild(a);
+  }
+  if (data.conclusion.items_to_verify.length) {
+    const a = document.createElement('div');
+    a.className = 'alert alert-warning';
+    a.innerHTML = `<span class="alert-icon">⚠️</span><div><strong>Itens para verificar:</strong> ${data.conclusion.items_to_verify.join(' · ')}</div>`;
+    ar.appendChild(a);
+  }
+  if (data.property.multiple_inscriptions_detected) {
+    const a = document.createElement('div');
+    a.className = 'alert alert-warning';
+    a.innerHTML = `<span class="alert-icon">⚠️</span><div><strong>Múltiplas inscrições detectadas</strong> — conferir a inscrição pleiteada antes de homologar.</div>`;
+    ar.appendChild(a);
+  }
+  ar.style.display = ar.innerHTML ? 'flex' : 'none';
+  ar.style.flexDirection = 'column';
+  ar.style.gap = '8px';
+
+  // Metrics
+  document.getElementById('m-name').textContent = data.applicant.name;
+  document.getElementById('m-cpf').textContent = 'CPF: ' + data.applicant.cpf_masked;
+  document.getElementById('m-benefit').textContent = BENEFIT_LABEL[data.request.benefit_type] || data.request.benefit_type;
+  document.getElementById('m-year').textContent = 'Exercício ' + data.request.requested_year;
+  document.getElementById('m-reg').textContent = data.property.registration_number || '—';
+  document.getElementById('m-rel').textContent = REL_LABEL[data.property.relationship_type] || data.property.relationship_type;
+  document.getElementById('m-pages').textContent = data.total_page_count;
+  document.getElementById('m-ocr').textContent = data.ocr_page_count + ' páginas com OCR';
+
+  // Checklist
+  renderChecklist(data.checklist, 'all');
+
+  // Draft
+  document.getElementById('draft-text').textContent = data.draft_text || '(Sem minuta de mérito para esta conclusão.)';
+
+  // Audit
+  const m = data.metadata;
+  const auditItems = [
+    ['ID da análise', m.analysis_id],
+    ['Data/hora (UTC)', new Date(m.created_at).toLocaleString('pt-BR')],
+    ['Processo', data.process_id],
+    ['Política de PII', m.pii_policy],
+    ['legal_references', m.legal_references_version],
+    ['business_rules', m.business_rules_version],
+    ['checklist', m.checklist_version],
+    ['prompts', m.prompt_version],
+    ['LLM', `${m.llm_provider} / ${m.llm_model}`],
+    ['OCR', m.ocr_engine],
+  ];
+  document.getElementById('audit-grid').innerHTML = auditItems.map(([k,v]) =>
+    `<div class="audit-row"><div class="audit-key">${k}</div><div class="audit-val">${v}</div></div>`
+  ).join('');
+}
+
+function renderChecklist(items, filter) {
+  const tbody = document.getElementById('checklist-body');
+  const filtered = filter === 'all' ? items : items.filter(i => i.status === filter);
+  tbody.innerHTML = filtered.map(item => {
+    const sm = STATUS_MAP[item.status] || {tag:'tag-na', icon:'?', label:item.status};
+    const confidence = Math.round(item.confidence * 100);
+    const confColor = confidence >= 90 ? 'var(--green)' : confidence >= 70 ? 'var(--amber)' : 'var(--red)';
+    return `<tr data-status="${item.status}">
+      <td style="text-align:center;">${item.required ? '<span class="tag tag-required" title="Obrigatório">★</span>' : ''}</td>
+      <td class="item-name">${item.label}</td>
+      <td><span class="tag ${sm.tag}">${sm.icon} ${sm.label}</span></td>
+      <td class="item-page">${item.page != null ? 'p. '+item.page : '—'}</td>
+      <td class="item-evidence">${item.evidence || '—'}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:50px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
+            <div style="width:${confidence}%;height:100%;background:${confColor};border-radius:3px;"></div>
+          </div>
+          <span style="font-size:11px;font-family:var(--mono);color:var(--text-muted);">${confidence}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterChecklist(el, status) {
+  document.querySelectorAll('#filter-row .filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  if (currentData) renderChecklist(currentData.checklist, status);
+}
+
+// ── Collapsible ─────────────────────────────────────────────────────────────
+
+function toggleCollapsible(contentId, header) {
+  const content = document.getElementById(contentId);
+  const isOpen = header.classList.contains('open');
+  if (isOpen) {
+    content.style.maxHeight = '0';
+    header.classList.remove('open');
+  } else {
+    content.style.maxHeight = content.scrollHeight + 'px';
+    header.classList.add('open');
+  }
+}
+
+// ── Upload flow ──────────────────────────────────────────────────────────────
+
+let selectedFile = null;
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) setFile(file);
+}
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.add('drag-over');
+}
+function handleDragLeave() {
+  document.getElementById('drop-zone').classList.remove('drag-over');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') setFile(file);
+}
+function setFile(file) {
+  selectedFile = file;
+  document.getElementById('drop-zone').style.display = 'none';
+  document.getElementById('file-selected-row').style.display = 'block';
+  document.getElementById('file-name-display').textContent = file.name;
+  document.getElementById('file-meta-display').textContent =
+    (file.size / 1024 / 1024).toFixed(2) + ' MB · PDF';
+  document.getElementById('analyze-btn').disabled = false;
+}
+function removeFile() {
+  selectedFile = null;
+  document.getElementById('drop-zone').style.display = '';
+  document.getElementById('file-selected-row').style.display = 'none';
+  document.getElementById('analyze-btn').disabled = true;
+  document.getElementById('file-input').value = '';
+}
+
+async function startAnalysis() {
+  if (!selectedFile) return;
+
+  const processId = document.getElementById('process-id').value || '';
+
+  document.getElementById('drop-zone').style.display = 'none';
+  document.getElementById('file-selected-row').style.display = 'none';
+
+  const panel = document.getElementById('progress-panel');
+  panel.classList.add('visible');
+
+  const analyzeBtn = document.getElementById('analyze-btn');
+  analyzeBtn.disabled = true;
+
+  resetProgressSteps();
+  activateProgressStep(0, 15);
+
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+  formData.append('process_id', processId);
+
+  try {
+    activateProgressStep(1, 30);
+
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      body: formData,
+    });
+
+    activateProgressStep(4, 80);
+
+    if (!response.ok) {
+      let message = 'Erro ao analisar o processo.';
+
+      try {
+        const errorPayload = await response.json();
+        message = errorPayload.detail || message;
+      } catch (_) {
+        // mantém mensagem padrão
+      }
+
+      throw new Error(message);
+    }
+
+    const data = await response.json();
+
+    activateProgressStep(5, 100);
+
+    setTimeout(() => {
+      panel.classList.remove('visible');
+      renderResult(data);
+      document.getElementById('env-badge').textContent = '● Análise real';
+      document.getElementById('env-badge').className = 'badge-env live';
+
+      if (data.metadata) {
+        document.getElementById('sb-provider').textContent = data.metadata.llm_provider || '—';
+        document.getElementById('sb-model').textContent = data.metadata.llm_model || '—';
+        document.getElementById('sb-prompts').textContent = data.metadata.prompt_version || '—';
+        document.getElementById('sb-ocr').textContent = data.metadata.ocr_engine || '—';
+      }
+    }, 300);
+
+  } catch (error) {
+    panel.classList.remove('visible');
+    analyzeBtn.disabled = false;
+    showToast('❌ ' + error.message);
+  }
+}
+
+function resetProgressSteps() {
+  for (let i = 0; i < 6; i++) {
+    const step = document.getElementById(`step-${i}`);
+    step.classList.remove('active', 'done');
+    step.querySelector('.step-dot').textContent = i + 1;
+  }
+
+  document.getElementById('progress-bar').style.width = '0%';
+}
+
+function activateProgressStep(index, percent) {
+  for (let i = 0; i < 6; i++) {
+    const step = document.getElementById(`step-${i}`);
+
+    if (i < index) {
+      step.classList.remove('active');
+      step.classList.add('done');
+      step.querySelector('.step-dot').textContent = '✓';
+    } else if (i === index) {
+      step.classList.add('active');
+    } else {
+      step.classList.remove('active', 'done');
+      step.querySelector('.step-dot').textContent = i + 1;
+    }
+  }
+
+  document.getElementById('progress-bar').style.width = `${percent}%`;
+}
+
+// ── Demo navigation ──────────────────────────────────────────────────────────
+
+function loadDemo(key) {
+  // Update demo bar buttons
+  document.querySelectorAll('.demo-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.toLowerCase().includes(key.split('').slice(0,3).join('')));
+  });
+
+  if (key === 'upload') {
+    document.getElementById('result-section').style.display = 'none';
+    document.getElementById('upload-section').style.display = 'block';
+    // Reset progress
+    document.getElementById('progress-panel').classList.remove('visible');
+    for(let i=0;i<6;i++){
+      const s = document.getElementById(`step-${i}`);
+      s.classList.remove('active','done');
+      s.querySelector('.step-dot').textContent = i+1;
+    }
+    document.getElementById('progress-bar').style.width='0%';
+    removeFile();
+  } else {
+    loadDemoResult(key);
+  }
+}
+
+function loadDemoResult(key) {
+  const data = DEMOS[key];
+  if (!data) return;
+  document.getElementById('upload-section').style.display = 'none';
+  renderResult(data);
+  // Update env badge
+  document.getElementById('env-badge').textContent = '● Demo offline';
+}
+
+// ── Actions ──────────────────────────────────────────────────────────────────
+
+function copyDraft() {
+  const text = document.getElementById('draft-text').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('✓ Minuta copiada para a área de transferência'));
+}
+
+function downloadMinuta() {
+  if (!currentData) return;
+  const text = currentData.draft_text || '';
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `minuta_${currentData.process_id || 'processo'}.txt`;
+  a.click();
+  showToast('⬇ Download iniciado');
+}
+
+function showToast(msg) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function setNav(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+loadDemo('upload');
+</script>
+</body>
+</html>

@@ -11,3 +11,6 @@ paddlepaddle==3.0.0
 paddleocr==3.0.1
 pillow
 numpy
+fastapi
+uvicorn[standard]
+python-multipart

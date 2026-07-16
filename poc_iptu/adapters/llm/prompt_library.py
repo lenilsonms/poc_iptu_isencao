@@ -37,7 +37,13 @@ class PromptTemplate:
         if classified_documents is not None:
             rendered = rendered.replace(_TOKEN_CLASSIFIED, classified_documents)
         return rendered
-
+    
+    def render(self, tokens: dict[str, str]) -> str:
+        """Renderização genérica por tokens {{NOME}} — usada pelos prompts novos."""
+        rendered = self._user_template
+        for name, value in tokens.items():
+            rendered = rendered.replace(f"{{{{{name}}}}}", value)
+        return rendered
 
 class PromptLibrary:
     """Conjunto de prompts carregado de prompts.yaml."""
@@ -50,6 +56,7 @@ class PromptLibrary:
         temperature: float,
         response_format: str,
         max_page_chars: int,
+        drafting: PromptTemplate | None = None
     ) -> None:
         self.version = version
         self.classification = classification
@@ -57,6 +64,7 @@ class PromptLibrary:
         self.temperature = temperature
         self.response_format = response_format
         self.max_page_chars = max_page_chars
+        self.drafting = drafting
 
     @classmethod
     def from_yaml(cls, path: Path | str) -> "PromptLibrary":
@@ -65,6 +73,7 @@ class PromptLibrary:
         defaults = raw.get("defaults", {})
         classification = cls._build_template(raw, "classification")
         extraction = cls._build_template(raw, "extraction")
+        drafting = cls._build_template(raw, "drafting") if "drafting" in raw else None
         return cls(
             version=cls._require(metadata, "version", "prompts.yaml.metadata"),
             classification=classification,
@@ -72,6 +81,7 @@ class PromptLibrary:
             temperature=float(defaults.get("temperature", 0.0)),
             response_format=str(defaults.get("response_format", "json_object")),
             max_page_chars=int(defaults.get("max_page_chars", 4000)),
+            drafting=drafting,
         )
 
     # ----------------------------------------------------------------- helpers

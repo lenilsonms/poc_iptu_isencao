@@ -34,6 +34,9 @@ from ..application.analyze_process_use_case import (
 from ..domain.pipeline_models import ProcessAnalysisResult
 from ..ports.ocr import OcrPort
 from ..adapters.llm.openai_chat_client import OpenAIChatClient, OpenAISettings
+from ..config import ConfigLoader
+from ..drafting.decision_draft_service import DecisionDraftService
+from ..adapters.llm.llm_draft_service import LlmDecisionDraftService
 
 class AnalysisMode(str, Enum):
     AZURE = "AZURE"
@@ -84,6 +87,17 @@ def _build_openai(
     classifier = AzureDocumentClassification(chat_client, prompts, allowed_types)
     extractor = AzureFieldExtraction(chat_client, prompts)
     
+    # 1. Carregamos a config e inicializamos o serviço de draft (LLM + determinístico) ANTES do use_case
+    app_config = ConfigLoader(config_dir).load()
+    deterministic_drafter = DecisionDraftService(app_config.conclusion_mapping)
+    llm_drafter = LlmDecisionDraftService(
+        chat_client=chat_client,
+        prompts=prompts,
+        conclusion_mapping=app_config.conclusion_mapping,
+        fallback=deterministic_drafter,
+    )
+
+    # 2. Injetamos o decision_draft_service diretamente na construção do caso de uso
     use_case = build_analyze_process_use_case(
         config_dir=config_dir,
         document_reader=PyMuPdfDocumentReader(ocr),
@@ -93,10 +107,13 @@ def _build_openai(
         llm_provider="openai",
         llm_model=chat_client.model_name,
         prompt_version=prompts.version,
+        decision_draft_service=llm_drafter,  # <-- CORREÇÃO: Serviço injetado aqui
     )
+
+    # 3. O RunnerContext volta a ter apenas as propriedades estritamente declaradas no dataclass
     return RunnerContext(
         use_case=use_case,
-        mode=AnalysisMode.AZURE, # Reutilizamos o modo AZURE pois significa "LLM Real" na UI
+        mode=AnalysisMode.AZURE, 
         llm_provider="openai",
         llm_model=chat_client.model_name,
         prompt_version=prompts.version,

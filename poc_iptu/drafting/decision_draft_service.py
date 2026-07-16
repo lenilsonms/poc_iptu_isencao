@@ -27,6 +27,11 @@ from ..domain.pipeline_models import (
     ProcessAnalysisResult,
 )
 
+from ..ports.decision_drafting import DecisionDraftingPort
+from . import draft_layout
+from .draft_layout import apply_cpf_mask
+from .draft_guardrails import DraftGuardrailValidator, DraftGuardrailViolation
+
 _FORBIDDEN_DECISION_PATTERN = re.compile(r"\bDEFIRO\b")
 _NORMA_BASE = "Lei Municipal nº 4.158/1992"
 _FOOTER = (
@@ -62,6 +67,7 @@ class DecisionDraftService:
 
     def __init__(self, conclusion_mapping: ConclusionMappingConfig) -> None:
         self._config = conclusion_mapping
+        self._guardrails = DraftGuardrailValidator()
         self._renderers = {
             "RELATORIO": self._render_relatorio,
             "ADMISSIBILIDADE": self._render_admissibilidade,
@@ -72,28 +78,29 @@ class DecisionDraftService:
         }
 
     def generate(self, result: ProcessAnalysisResult) -> DecisionDraft:
-        #self._assert_cpf_masked(result.applicant)
         state_config = self._state_config(result.conclusion.status)
         header = self._render_header(result)
 
         if not state_config.generate_merit_draft:
-            text = "\n\n".join([header, state_config.draft_text, _FOOTER])
-            return DecisionDraft(
-                status=result.conclusion.status,
-                is_merit_draft=False,
-                sections=[],
-                text=text,
-            )
+            text = "\n\n".join([header, state_config.draft_text, draft_layout.FOOTER])
+            # SANITIZAÇÃO GLOBAL
+            text = re.sub(r"\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b", "***.***.***-**", text)
+            return DecisionDraft(status=result.conclusion.status,
+                                 is_merit_draft=False, sections=[], text=text)
 
         sections = self._render_sections(result)
         text = self._compose_text(header, sections)
-        self._assert_no_forbidden_decision(text)
-        return DecisionDraft(
-            status=result.conclusion.status,
-            is_merit_draft=True,
-            sections=sections,
-            text=text,
-        )
+        
+        # SANITIZAÇÃO GLOBAL ANTES DO GUARDRAIL
+        text = re.sub(r"\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b", "***.***.***-**", text)
+        
+        try:
+            self._guardrails.validate_merit_draft(text, result)
+        except DraftGuardrailViolation as exc:
+            raise DraftGenerationError(str(exc)) from exc
+            
+        return DecisionDraft(status=result.conclusion.status,
+                             is_merit_draft=True, sections=sections, text=text)
 
     # --------------------------------------------------------------- montagem
 
@@ -127,7 +134,8 @@ class DecisionDraftService:
 
     @staticmethod
     def _render_header(result: ProcessAnalysisResult) -> str:
-        cpf = result.applicant.cpf_masked or "(não informado)"
+        cpf_raw = result.applicant.cpf_masked
+        cpf = apply_cpf_mask(cpf_raw) or "(não informado)" # <-- APLICAR MÁSCARA AQUI
         registration = result.property.registration_number or "(não informada)"
         return "\n".join(
             [

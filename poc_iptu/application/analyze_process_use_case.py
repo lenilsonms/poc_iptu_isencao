@@ -36,6 +36,7 @@ from ..ports.ocr import OcrPort
 from ..rules.checklist_assembler import ChecklistAssembler
 from ..rules.process_evaluator import ProcessEvaluator, build_evaluator
 from .. import __version__
+from ..ports.decision_drafting import DecisionDraftingPort
 
 # Política de PII registrada na auditoria. CPF circula mascarado na UI/minuta/logs.
 _PII_POLICY = "CPF mascarado em UI/minuta/logs; CPF bruto restrito a uso interno controlado."
@@ -70,7 +71,8 @@ class AnalyzeProcessUseCase:
         llm_model: str,
         ocr_engine: str,
         prompt_version: str = "n/a",
-        decision_draft_service: DecisionDraftService | None = None,
+        decision_draft_service: DecisionDraftingPort | None = None,  # <- tipo da porta
+
     ) -> None:
         self._document_reader = document_reader
         self._classifier = classifier
@@ -167,12 +169,14 @@ def build_analyze_process_use_case(
     llm_provider: str,
     llm_model: str,
     prompt_version: str = "n/a",
+    decision_draft_service: DecisionDraftingPort | None = None,
 ) -> AnalyzeProcessUseCase:
     """Composition root do caso de uso: carrega config e injeta todas as dependências."""
     app_config: AppConfig = ConfigLoader(config_dir).load()
     checklist_assembler = ChecklistAssembler(app_config.checklist)
     process_evaluator: ProcessEvaluator = build_evaluator(config_dir)
-    decision_draft_service = DecisionDraftService(app_config.conclusion_mapping)
+    if decision_draft_service is None:
+        decision_draft_service = DecisionDraftService(app_config.conclusion_mapping)
     return AnalyzeProcessUseCase(
         document_reader=document_reader,
         classifier=classifier,

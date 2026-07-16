@@ -16,6 +16,7 @@ from .offline_demo import (
 from .prompt_library import PromptLibrary, PromptTemplate
 from .serialization import LlmResponseError
 from .taxonomy import load_allowed_document_types
+from .llm_draft_service import LlmDecisionDraftService
 
 __all__ = [
     "AzureDocumentClassification",
@@ -32,4 +33,5 @@ __all__ = [
     "PromptLibrary",
     "PromptTemplate",
     "load_allowed_document_types",
+    "LlmDecisionDraftService",
 ]

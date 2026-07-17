@@ -21,14 +21,80 @@ from .enums import (
     IncomeStatus,
     LegalRegimeId,
     PropertyRelationshipType,
+    AdmissibilityStatus,
+    DenialGround,
 )
 
+from .enums import (  # acrescentar ao import existente
+    AdmissibilityStatus,
+    DenialGround,
+)
 
 class _Frozen(BaseModel):
     """Base imutável comum a todos os modelos de domínio."""
 
     model_config = ConfigDict(frozen=True)
 
+
+class IncomeSource(_Frozen):
+    """Uma fonte de renda identificada no processo, com valor bruto mensal quando extraível.
+
+    monthly_gross_amount = None significa 'fonte identificada, valor não comprovado' —
+    exatamente o cenário que dispara VERIFICAR (nunca presumimos valor).
+    """
+
+    description: str                        # ex.: "Aposentadoria INSS", "MEI (JUCESP)"
+    monthly_gross_amount: float | None = None
+    evidence: str | None = None
+    page: int | None = None
+
+
+class AdmissibilityFacts(_Frozen):
+    """Fatos de admissibilidade (Etapas 2 e 3 do fluxo SRC). Produzidos no Sprint 3;
+    até lá, os defaults NAO_AVALIADO tornam este modelo neutro na precedência."""
+
+    tempestividade: AdmissibilityStatus = AdmissibilityStatus.NAO_AVALIADO
+    tempestividade_detail: str | None = None
+    legitimidade: AdmissibilityStatus = AdmissibilityStatus.NAO_AVALIADO
+    legitimidade_detail: str | None = None
+    perda_de_objeto_detectada: bool = False
+    perda_de_objeto_detail: str | None = None
+
+
+class IncomeAnalysis(_Frozen):
+    """Análise de renda agregada do requerente.
+
+    A partir do Sprint 2, `income_status` deixa de ser palavra final do LLM: o
+    IncomeLimitCalculator o recalcula deterministicamente a partir de `sources`.
+    """
+
+    benefit_condition: BenefitType
+    benefit_document_found: bool
+    income_document_found: bool
+    other_sources_flag: str | None = None
+    income_status: IncomeStatus
+    sources: list[IncomeSource] = Field(default_factory=list)      # NOVO
+    total_monthly_gross: float | None = None                       # NOVO: preenchido pelo calculador
+    applied_income_limit: float | None = None                      # NOVO: 5 × SM[exercício]
+
+
+class ProcessAnalysisInput(_Frozen):
+    request: RequestIdentification
+    property: PropertyQualification
+    income: IncomeAnalysis
+    checklist: list[ChecklistItemResult]
+    admissibility: AdmissibilityFacts = Field(default_factory=AdmissibilityFacts)  # NOVO
+
+
+class ConclusionResult(_Frozen):
+    status: ConclusionStatus
+    main_reason: str
+    denial_ground: DenialGround | None = None      # NOVO (ADR-S2-02)
+    missing_required_documents: list[str] = Field(default_factory=list)
+    items_to_verify: list[str] = Field(default_factory=list)
+    legal_basis: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    generate_merit_draft: bool = True
 
 class ChecklistItemResult(_Frozen):
     """Resultado da verificação de um item documental do checklist."""
@@ -42,16 +108,6 @@ class ChecklistItemResult(_Frozen):
     confidence: float = 1.0
     legal_basis: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
-
-
-class IncomeAnalysis(_Frozen):
-    """Análise de renda agregada do requerente."""
-
-    benefit_condition: BenefitType
-    benefit_document_found: bool
-    income_document_found: bool
-    other_sources_flag: str | None = None
-    income_status: IncomeStatus
 
 
 class PropertyQualification(_Frozen):
@@ -72,20 +128,6 @@ class RequestIdentification(_Frozen):
     explicit_decree_mention: str | None = None
     page: int | None = None
 
-
-class ProcessAnalysisInput(_Frozen):
-    """Visão determinística dos fatos extraídos, consumida pelo motor de regras.
-
-    É a fronteira entre a parte estocástica (LLM/OCR) e a parte determinística (regras).
-    Tudo aqui já é fato estruturado e tipado.
-    """
-
-    request: RequestIdentification
-    property: PropertyQualification
-    income: IncomeAnalysis
-    checklist: list[ChecklistItemResult]
-
-
 class SelectedRegime(_Frozen):
     """Regime legal selecionado para o processo, já resolvido em fatos acionáveis.
 
@@ -101,13 +143,3 @@ class SelectedRegime(_Frozen):
     selection_reason: str
 
 
-class ConclusionResult(_Frozen):
-    """Conclusão sugerida pelo motor determinístico. NUNCA é uma decisão final."""
-
-    status: ConclusionStatus
-    main_reason: str
-    missing_required_documents: list[str] = Field(default_factory=list)
-    items_to_verify: list[str] = Field(default_factory=list)
-    legal_basis: list[str] = Field(default_factory=list)
-    warnings: list[str] = Field(default_factory=list)
-    generate_merit_draft: bool = True

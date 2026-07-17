@@ -67,7 +67,13 @@ extraction:
     - benefit_type deve ser um de: APOSENTADO, PENSIONISTA, LOAS, PRODUTOR_RURAL, OUTRO.
     - relationship_type deve ser um de: PROPRIETARIO, COPROPRIETARIO, COMPROMISSARIO,
       TITULAR_DOMINIO_UTIL, POSSUIDOR, CESSIONARIO, USUFRUTUARIO, VERIFICAR.
-    - income_status deve ser um de: OK, VERIFICAR, ACIMA_DO_LIMITE, NAO_APLICAVEL.
+    - income_sources: liste TODAS as fontes de renda identificadas no processo
+      (aposentadoria, pensão, vínculo empregatício, MEI/empresa, aluguel, aplicações,
+      lucros/dividendos etc.). Para cada fonte, informe monthly_gross_amount com o valor
+      BRUTO MENSAL em reais SOMENTE quando o valor constar em documento do processo;
+      caso contrário, null. NUNCA estime valores.
+    - income_status: sua melhor hipótese (OK, VERIFICAR, NAO_APLICAVEL) — o sistema
+      recalculará o status final; NUNCA responda ACIMA_DO_LIMITE.
     - explicit_decree_mention: transcreva o decreto citado no processo, se houver (ex.:
       "Decreto nº 34.767/2018"); caso contrário, null.
     - other_sources_flag: marque um rótulo (ex.: "JUCESP_MEI") quando houver indício de outra
@@ -103,7 +109,15 @@ extraction:
         "benefit_document_found": <bool>,
         "income_document_found": <bool>,
         "other_sources_flag": "<string ou null>",
-        "income_status": "<status>"
+        "income_status": "<OK | VERIFICAR | NAO_APLICAVEL>",
+        "sources": [
+          {
+            "description": "<ex.: Aposentadoria INSS>",
+            "monthly_gross_amount": <float ou null>,
+            "evidence": "<trecho textual ou null>",
+            "page": <int ou null>
+          }
+        ]
       }
     }
   user_template: |

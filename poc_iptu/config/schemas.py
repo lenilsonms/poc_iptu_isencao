@@ -11,7 +11,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict
 
 from ..domain.enums import BenefitType, ConclusionStatus, LegalRegimeId
-
+from datetime import date
 
 class _StrictConfig(BaseModel):
     """Base estrita para configs: rejeita coerções silenciosas perigosas."""
@@ -43,6 +43,16 @@ class SummaryDenialConfig(_StrictConfig):
     applies_only_when_legal_regime_allows_summary_denial: bool
     legal_regime_rules: dict[str, SummaryDenialRegimeRule]
 
+class IncomeLimitConfig(_StrictConfig):
+    """Parâmetros do limite de renda (5 SM por exercício)."""
+
+    multiplier: int
+    salario_minimo_por_ano: dict[int, float]
+
+    def limit_for_year(self, year: int) -> float | None:
+        """5 × SM do exercício; None se o ano não estiver na tabela (nunca extrapola)."""
+        minimum_wage = self.salario_minimo_por_ano.get(year)
+        return None if minimum_wage is None else self.multiplier * minimum_wage
 
 class BusinessRulesConfig(_StrictConfig):
     version: str
@@ -50,6 +60,7 @@ class BusinessRulesConfig(_StrictConfig):
     scope: ScopeConfig
     confidence: ConfidencePolicyConfig
     summary_denial: SummaryDenialConfig
+    income_limit: IncomeLimitConfig
 
 
 class DecreeConfig(_StrictConfig):
@@ -57,13 +68,24 @@ class DecreeConfig(_StrictConfig):
     name: str
     status: str
     article_map: dict[str, str]
+    # NOVO — janela de vigência confirmada; None quando desconhecida.
+    valid_from: date | None = None
+    valid_until: date | None = None
 
+    def is_in_force_on(self, reference_date: date) -> bool:
+        """True se a data está dentro da janela de vigência CONFIRMADA do decreto."""
+        if self.valid_from is None:
+            return False  # sem vigência confirmada, nunca seleciona por data
+        if reference_date < self.valid_from:
+            return False
+        return self.valid_until is None or reference_date <= self.valid_until
 
 class LegalReferencesConfig(_StrictConfig):
     version: str
     decrees: dict[LegalRegimeId, DecreeConfig]
     selection_priority: list[str]
     fallback_status: ConclusionStatus
+    year_to_regime: dict[int, LegalRegimeId] = {}
 
 
 class ChecklistItemConfig(_StrictConfig):

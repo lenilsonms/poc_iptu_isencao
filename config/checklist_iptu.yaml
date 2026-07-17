@@ -36,6 +36,7 @@ items:
       - CERTIDAO_CASAMENTO
       - ESCRITURA_UNIAO_ESTAVEL
       - CERTIDAO_OBITO
+      - ESCRITURA_DECLARACAO_UNIAO_ESTAVEL
       - DECLARACAO_UNIAO_ESTAVEL
       - CPF_CONJUGE_COMPANHEIRO
     missing_impacts_conclusion: false
@@ -81,6 +82,7 @@ items:
     accepted_document_types:
       - EXTRATO_INSS
       - EXTRATO_RENDIMENTO_FONTE_PAGADORA
+      - EXTRATO_PAGAMENTO_BENEFICIO_SISBB
       - DEMONSTRATIVO_RENDIMENTO_PREVIDENCIARIO
     not_equivalent_document_types:
       - CARTA_CONCESSAO_BENEFICIO

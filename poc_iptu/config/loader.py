@@ -88,6 +88,7 @@ class ConfigLoader:
             "scope": self._require(raw, "scope", src),
             "confidence": self._require(raw, "confidence_policy", src),
             "summary_denial": self._require(raw, "summary_denial", src),
+            "income_limit": self._require(raw, "income_limit", src),
         }
         try:
             return BusinessRulesConfig.model_validate(payload)
@@ -100,9 +101,7 @@ class ConfigLoader:
         metadata = self._require(raw, "metadata", src)
         regulatory = self._require(raw, "regulatory_decrees", src)
         items = self._require(regulatory, "items", f"{src}.regulatory_decrees")
-        strategy = self._require(
-            regulatory, "selection_strategy", f"{src}.regulatory_decrees"
-        )
+        strategy = self._require(regulatory, "selection_strategy", f"{src}.regulatory_decrees")
 
         decrees: dict[str, DecreeConfig] = {}
         for item in items:
@@ -118,11 +117,51 @@ class ConfigLoader:
             "fallback_status": self._require(
                 strategy, "fallback_status", f"{src}.regulatory_decrees.selection_strategy"
             ),
+            # NOVO: expande "2004-2017" -> {2004: ..., ..., 2017: ...}
+            "year_to_regime": self._expand_year_ranges(
+                strategy.get("conservative_year_to_regime", {}), src
+            ),
         }
         try:
             return LegalReferencesConfig.model_validate(payload)
         except Exception as exc:
             raise ConfigValidationError(f"legal_references.yaml inválido: {exc}") from exc
+
+    @staticmethod
+    def _expand_year_ranges(
+        raw_map: dict, source: str
+    ) -> dict[int, str]:
+        """Converte chaves '2004-2017' ou '2026' em um mapa ano->regime.
+
+        Falha alto (ConfigValidationError) em intervalos malformados ou sobrepostos —
+        um mapa ambíguo de regime é inadmissível num motor de fundamentação legal.
+        """
+        expanded: dict[int, str] = {}
+        for key, regime_id in (raw_map or {}).items():
+            key_text = str(key).strip()
+            try:
+                if "-" in key_text:
+                    start_text, end_text = key_text.split("-", maxsplit=1)
+                    start_year, end_year = int(start_text), int(end_text)
+                else:
+                    start_year = end_year = int(key_text)
+            except ValueError as exc:
+                raise ConfigValidationError(
+                    f"Intervalo de exercício inválido em {source}."
+                    f"conservative_year_to_regime: '{key_text}'."
+                ) from exc
+            if end_year < start_year:
+                raise ConfigValidationError(
+                    f"Intervalo invertido em conservative_year_to_regime: '{key_text}'."
+                )
+            for year in range(start_year, end_year + 1):
+                if year in expanded:
+                    raise ConfigValidationError(
+                        f"Exercício {year} mapeado para mais de um regime em "
+                        "conservative_year_to_regime."
+                    )
+                expanded[year] = regime_id
+        return expanded
 
     def _load_checklist(self) -> ChecklistConfig:
         raw = self._read_yaml(self.CHECKLIST_FILE)

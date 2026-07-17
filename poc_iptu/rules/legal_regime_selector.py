@@ -51,23 +51,39 @@ class LegalRegimeSelector:
     def _resolve_regime_id(
         self, request: RequestIdentification
     ) -> tuple[LegalRegimeId | None, str]:
-        # 1) menção explícita no PDF
+        # 1) Menção explícita no PDF — sinal mais forte.
         if request.explicit_decree_mention:
             matched = self._match_decree_by_mention(request.explicit_decree_mention)
             if matched is not None:
                 return matched, "Menção explícita ao decreto no processo (PDF)."
 
-        # 2) heurística conservadora por exercício (somente quando inequívoca)
-        if request.requested_year <= _CONSERVATIVE_OLD_REGIME_MAX_YEAR:
-            if LegalRegimeId.DEC_34767_2018.value in self._legal_references.decrees:
-                return (
-                    LegalRegimeId.DEC_34767_2018,
-                    "Exercício até 2024 sem menção explícita; preferência conservadora pelo "
-                    "regime do Decreto nº 34.767/2018 (data de corte ainda não confirmada).",
+        # 2) Data de autuação dentro da janela de vigência confirmada de um decreto.
+        if request.protocol_date is not None:
+            matched = self._match_decree_by_validity(request.protocol_date)
+            if matched is not None:
+                return matched, (
+                    f"Data de autuação ({request.protocol_date.isoformat()}) dentro da "
+                    "vigência confirmada do decreto."
                 )
 
-        # 3) sem seleção segura
+        # 3) Exercício pleiteado via mapa conservador (config-driven).
+        mapped = self._legal_references.year_to_regime.get(request.requested_year)
+        if mapped is not None:
+            return LegalRegimeId(mapped), (
+                f"Exercício {request.requested_year} mapeado de forma conservadora ao "
+                "regime vigente, sem menção explícita nem data de autuação (ADR-S1-01: "
+                "anos de transição não recebem regime automático)."
+            )
+
+        # 4) Sem seleção segura.
         return None, self._legal_references.fallback_status.value
+
+    def _match_decree_by_validity(self, protocol_date) -> LegalRegimeId | None:
+        """Decreto cuja janela de vigência confirmada contém a data de autuação."""
+        for regime_id_str, decree in self._legal_references.decrees.items():
+            if decree.is_in_force_on(protocol_date):
+                return LegalRegimeId(regime_id_str)
+        return None
 
     def _match_decree_by_mention(self, mention: str) -> LegalRegimeId | None:
         """Casa a menção textual ao decreto pelo seu número (ex.: '34.767/2018')."""

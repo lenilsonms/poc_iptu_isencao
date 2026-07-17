@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from ..domain.enums import ChecklistStatus
 from ..domain.pipeline_models import ProcessAnalysisResult
+from ..domain.enums import PropertyRelationshipType
 
 FOOTER = (
     "Observação: esta minuta foi gerada por assistente de IA e deve ser revisada pela "
@@ -35,6 +36,38 @@ STATUS_LABELS: dict[ChecklistStatus, str] = {
 
 _ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
 
+RELATIONSHIP_LABELS: dict[PropertyRelationshipType, str] = {
+    PropertyRelationshipType.PROPRIETARIO: "Proprietário(a)",
+    PropertyRelationshipType.COPROPRIETARIO: "Coproprietário(a)",
+    PropertyRelationshipType.COMPROMISSARIO: "Compromissário(a)",
+    PropertyRelationshipType.TITULAR_DOMINIO_UTIL: "Titular do domínio útil",
+    PropertyRelationshipType.POSSUIDOR: "Possuidor(a)",
+    PropertyRelationshipType.CESSIONARIO: "Cessionário(a)",
+    PropertyRelationshipType.USUFRUTUARIO: "Usufrutuário(a)",
+    PropertyRelationshipType.VERIFICAR: "A verificar",
+}
+
+_SIRF_INSCRIPTION_GROUPS = (3, 2, 2, 4, 2, 3)  # 000.00.00.0000.00.000 (15 dígitos)
+
+def relationship_label(relationship: PropertyRelationshipType) -> str:
+    return RELATIONSHIP_LABELS.get(relationship, relationship.value)
+
+def format_inscricao_sirf(raw_inscription: str | None) -> str:
+    """Normaliza a inscrição imobiliária para o padrão SIRF WEB 000.00.00.0000.00.000.
+
+    Se o valor não tiver exatamente 15 dígitos, devolve o original inalterado —
+    nunca inventamos dígitos num identificador cadastral.
+    """
+    if not raw_inscription:
+        return "(não informada)"
+    digits = "".join(ch for ch in raw_inscription if ch.isdigit())
+    if len(digits) != sum(_SIRF_INSCRIPTION_GROUPS):
+        return raw_inscription
+    parts, cursor = [], 0
+    for size in _SIRF_INSCRIPTION_GROUPS:
+        parts.append(digits[cursor:cursor + size])
+        cursor += size
+    return ".".join(parts)
 
 def section_title(index: int, code: str) -> str:
     """Título numerado em romano (ex.: 'III. ANÁLISE DOCUMENTAL E MATERIAL')."""
@@ -70,14 +103,20 @@ def render_header(result: ProcessAnalysisResult) -> str:
     registration = result.property.registration_number or "(não informada)"
     return "\n".join(
         [
+            "PREFEITURA MUNICIPAL DE GUARULHOS",
+            "SECRETARIA DA RECEITA – SRC",
+            "",
             "DECISÃO ADMINISTRATIVA DE 1ª INSTÂNCIA",
             "",
-            f"PAT: {result.process_id}",
+            f"Processo nº: {result.process_id}",
             "Assunto: Isenção de IPTU – Aposentados, Pensionistas e Beneficiários do LOAS",
-            f"Requerente: {result.applicant.name} | CPF: {cpf} | "
-            f"Inscrição Imobiliária: {registration}",
+            f"Requerente: {result.applicant.name}",
+            f"CPF: {cpf}",
+            f"Inscrição Cadastral: {format_inscricao_sirf(registration)}",
+            f"Vínculo: {relationship_label(result.property.relationship_type)}",
             f"Exercício: {result.request.requested_year}",
         ]
+
     )
 
 

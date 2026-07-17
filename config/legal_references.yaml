@@ -11,11 +11,13 @@
 
 metadata:
   config_name: legal_references
-  version: "1.2.0-poc-p0-fixes"
+  version: "1.3.0-sprint1-vigencias"
   frozen: false
   frozen_at: null
   legal_review_status: "PARTIALLY_VALIDATED_FROM_UPLOADED_LEGISLATION"
   changelog:
+    - "1.3.0-sprint1-vigencias: vigências confirmadas pelo passo a passo SRC (07/07/2026): DEC_22429_2003 até 12/03/2018; DEC_34767_2018 de 13/03/2018 a 16/04/2025; DEC_42621_2025 de 17/04/2025 a 12/03/2026. Resolve PENDING_DECREE_CUTOFF_DATE."
+    - "1.3.0-sprint1-vigencias: adicionado DEC_22429_2003 (regime histórico); adicionado conservative_year_to_regime; exercícios de transição (2018, 2025) caem no fallback (ADR-S1-01)."
     - "1.2.0-poc-p0-fixes: adicionada revocation_policy (norma revogada continua aplicável a processos do seu período de vigência)."
     - "1.2.0-poc-p0-fixes: confirmado e travado o article_map do Decreto 34.767/2018 (art. 3º = outras fontes de renda; art. 7º = indeferimento de plano), superando o mapa divergente do documento de requisitos .md."
   pending_documents:
@@ -127,6 +129,10 @@ regulatory_decrees:
       - "requested_year"
       - "fallback_verify_manually"
     fallback_status: "VERIFICAR_MANUALMENTE"
+    conservative_year_to_regime:
+      "2004-2017": "DEC_22429_2003"
+      "2019-2024": "DEC_34767_2018"
+      "2026": "DEC_42621_2025"
     fallback_reason: "Não foi possível selecionar com segurança o decreto aplicável."
     engineering_rule: >
       Se o PDF mencionar explicitamente o Decreto nº 34.767/2018 ou o Decreto nº 42.621/2025,
@@ -135,6 +141,20 @@ regulatory_decrees:
       marcar VERIFICAR_MANUALMENTE.
 
   items:
+    - id: "DEC_22429_2003"                                 # <- NOVO item
+      name: "Decreto nº 22.429/2003"
+      subject: "Regulamentação histórica da isenção (regime 2003–2018)"
+      status: "REVOGADO"
+      revoked_by: "Decreto nº 34.767/2018"
+      evidence_status: "CONFIRMED_FROM_SRC_WORKFLOW_DOCUMENT"
+      usage_in_poc: "HISTORICAL_REGIME_WITH_WARNING"
+      valid_from: "2003-01-01"        # início exato do decreto pendente de texto integral
+      valid_until: "2018-03-12"
+      article_map:
+        summary_denial: "art. 6º"     # fundamentação legal: falta de documentação
+        other_income_sources: "PENDING_CONFIRMATION"
+      notes:
+        - "Incluído a partir do passo a passo SRC. Texto integral pendente (só art. 6º confirmado)."
     - id: "DEC_34767_2018"
       name: "Decreto nº 34.767/2018"
       subject: "Regulamentação histórica da Lei Municipal nº 4.158/1992"
@@ -142,10 +162,12 @@ regulatory_decrees:
       revoked_by: "Decreto nº 42.621/2025"
       evidence_status: "CONFIRMED_FROM_UPLOADED_LEGISLATION"
       usage_in_poc: "HISTORICAL_REGIME_WITH_WARNING"
+      valid_from: "2018-03-13"
+      valid_until: "2025-04-16"
       applies_to:
         from: "2018-03-13"
-        until: "2025-XX-XX"
-        date_rule_status: "PENDING_CONFIRMATION"
+        until: "2025-04-16"
+        date_rule_status: "CONFIRMED_FROM_SRC_WORKFLOW_DOCUMENT"
       article_map:
         initial_declaration: "art. 1º"
         document_checklist: "art. 2º"
@@ -184,10 +206,12 @@ regulatory_decrees:
       subject: "Regulamentação atual da Lei Municipal nº 4.158/1992"
       status: "PARTIALLY_CONFIRMED_BY_FORM"
       evidence_status: "CONFIRMED_PARTIALLY_BY_DECLARACAO_REGIME_OCUPACAO"
+      valid_from: "2025-04-17"
+      valid_until: "2026-03-12"
       applies_to:
-        from: "2025-XX-XX"
-        until: null
-        date_rule_status: "PENDING_CONFIRMATION"
+        from: "2025-04-17"
+        until: "2026-03-12"
+        date_rule_status: "CONFIRMED_FROM_SRC_WORKFLOW_DOCUMENT"
       article_map:
         document_checklist: "art. 2º"
         single_property_or_residence: "art. 3º"

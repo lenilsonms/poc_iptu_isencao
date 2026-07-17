@@ -2,7 +2,7 @@
 
 metadata:
   config_name: conclusion_mapping
-  version: "1.1.0-poc-legal-review"
+  version: "1.2.0-sprint2-novos-estados"
   frozen: false
   frozen_at: null
 
@@ -13,8 +13,8 @@ states:
     generate_merit_draft: true
 
   APTO_PARA_ANALISE_DE_DEFERIMENTO:
-    display_label: "Apto para análise de deferimento"
-    draft_text: "O pedido encontra-se regularmente instruído quanto aos itens verificados pela POC, ficando apto à análise de deferimento pela autoridade competente."
+    display_label: "Apto — procedência a ser declarada pela autoridade competente"
+    draft_text: "O pedido encontra-se regularmente instruído quanto aos itens verificados, ficando apto à análise de deferimento (procedência) pela autoridade competente."
     generate_merit_draft: true
 
   VERIFICAR_MANUALMENTE:
@@ -26,7 +26,17 @@ states:
     display_label: "Fora do escopo da POC"
     draft_text: "O tipo de pedido identificado está fora do escopo da POC."
     generate_merit_draft: false
+  
+  NAO_CONHECIMENTO_SUGERIDO:
+    display_label: "Não conhecimento sugerido (intempestividade)"
+    draft_text: "Sugere-se o NÃO CONHECIMENTO do pedido, por intempestividade, restando prejudicado o exame do mérito."
+    generate_merit_draft: true
 
+  JULGAMENTO_PREJUDICADO_SUGERIDO:
+    display_label: "Julgamento prejudicado sugerido (perda de objeto)"
+    draft_text: "Sugere-se declarar PREJUDICADO o julgamento do pedido, por perda de objeto, ante o tratamento dos exercícios em processos anteriores."
+    generate_merit_draft: true
+    
 mandatory_sections:
   - RELATORIO
   - ADMISSIBILIDADE

@@ -1,24 +1,12 @@
-"""Resolução determinística da conclusão sugerida.
-
-Responsabilidade única: dada a visão de fatos (ProcessAnalysisInput) e o regime selecionado,
-produzir o estado canônico de conclusão segundo a tabela de precedência ordenada de
-business_rules.yaml (seção conclusion_resolution).
-
-A ORDEM das regras é o contrato. Em particular, documento obrigatório ausente (R3) tem
-precedência sobre verificação manual (R4) — é isso que reproduz o resultado do caso-ouro,
-onde há simultaneamente um documento ausente e itens a verificar, e a conclusão é
-INDEFERIMENTO_SUGERIDO.
-
-O fundamento legal é montado por agregação: a regra que define o estado contribui seu artigo
-(ex.: summary_denial -> art. 7º), e a "augmentation" adiciona artigos de condições presentes
-independentemente do estado (ex.: outras fontes em aberto -> art. 3º). É essa soma que produz
-o fundamento [art. 3º, art. 7º] do caso-ouro.
-"""
-
 from __future__ import annotations
-
 from ..config.schemas import BusinessRulesConfig
-from ..domain.enums import ChecklistStatus, ConclusionStatus, IncomeStatus
+from ..domain.enums import (
+    AdmissibilityStatus,
+    ChecklistStatus,
+    ConclusionStatus,
+    DenialGround,
+    IncomeStatus,
+)
 from ..domain.models import (
     ChecklistItemResult,
     ConclusionResult,
@@ -26,12 +14,25 @@ from ..domain.models import (
     SelectedRegime,
 )
 
-# Estado para o qual R3 rebaixa quando o regime não confirma a autoridade de indeferimento de plano.
 _SUMMARY_DENIAL_FALLBACK = ConclusionStatus.VERIFICAR_MANUALMENTE
+
+# Fundamentos das regras de admissibilidade (espelham admissibility_legal_basis do YAML;
+# se preferir 100% config-driven, carregue-os no BusinessRulesConfig — deixei constantes
+# aqui para reduzir o diff do loader neste sprint).
+_BASIS_INTEMPESTIVIDADE = ["Lei Municipal nº 7.774/2019, art. 40 (subsidiariamente)"]
+_BASIS_ILEGITIMIDADE = [
+    "Lei Municipal nº 7.774/2019, art. 40, inciso II",
+    "Decreto nº 21.066/2000, art. 11",
+    "Decreto nº 25.345/2008, art. 7º",
+]
+_BASIS_PERDA_DE_OBJETO = [
+    "Lei Municipal nº 7.774/2019, art. 35",
+    "Decreto nº 21.066/2000, art. 10",
+]
 
 
 class ConclusionResolver:
-    """Aplica a tabela de precedência e devolve a conclusão sugerida."""
+    """Aplica a tabela de precedência v2 e devolve a conclusão sugerida."""
 
     def __init__(self, business_rules: BusinessRulesConfig) -> None:
         self._rules = business_rules
@@ -42,7 +43,7 @@ class ConclusionResolver:
     ) -> ConclusionResult:
         base_warnings = self._collect_non_determinant_warnings(analysis)
 
-        # R1 — fora do escopo
+        # R1 — fora do escopo (inalterado).
         if analysis.request.benefit_type in self._out_of_scope:
             return ConclusionResult(
                 status=ConclusionStatus.FORA_DO_ESCOPO_POC,
@@ -51,7 +52,64 @@ class ConclusionResolver:
                 generate_merit_draft=False,
             )
 
-        # R0 — regime não identificado com segurança
+        # -------- ANDAR DE ADMISSIBILIDADE (novo) --------
+        admissibility_conclusion = self._resolve_admissibility(analysis, base_warnings)
+        if admissibility_conclusion is not None:
+            return admissibility_conclusion
+
+        # -------- ANDAR DE MÉRITO (regras existentes renumeradas) --------
+        return self._resolve_merit(analysis, regime, base_warnings)
+
+    # ------------------------------------------------------- admissibilidade
+
+    def _resolve_admissibility(
+        self, analysis: ProcessAnalysisInput, base_warnings: list[str]
+    ) -> ConclusionResult | None:
+        """Aplica A1–A3; devolve None quando a admissibilidade não determina o desfecho."""
+        facts = analysis.admissibility
+
+        # A1 — intempestividade -> não conhecimento (mérito não é examinado).
+        if facts.tempestividade == AdmissibilityStatus.FALHA:
+            return ConclusionResult(
+                status=ConclusionStatus.NAO_CONHECIMENTO_SUGERIDO,
+                main_reason=facts.tempestividade_detail
+                or "Pedido intempestivo; sugere-se o não conhecimento.",
+                legal_basis=list(_BASIS_INTEMPESTIVIDADE),
+                warnings=base_warnings,
+            )
+
+        # A2 — perda de objeto -> julgamento prejudicado.
+        if facts.perda_de_objeto_detectada:
+            return ConclusionResult(
+                status=ConclusionStatus.JULGAMENTO_PREJUDICADO_SUGERIDO,
+                main_reason=facts.perda_de_objeto_detail
+                or "Exercícios já tratados em processos anteriores; julgamento prejudicado.",
+                legal_basis=list(_BASIS_PERDA_DE_OBJETO),
+                warnings=base_warnings,
+            )
+
+        # A3 — ilegitimidade -> indeferimento por inépcia da inicial.
+        if facts.legitimidade == AdmissibilityStatus.FALHA:
+            return ConclusionResult(
+                status=ConclusionStatus.INDEFERIMENTO_SUGERIDO,
+                denial_ground=DenialGround.INEPCIA_DA_INICIAL,
+                main_reason=facts.legitimidade_detail
+                or "Requerente sem legitimidade; sugere-se indeferimento por inépcia da inicial.",
+                legal_basis=list(_BASIS_ILEGITIMIDADE),
+                warnings=base_warnings,
+            )
+
+        return None
+
+    # ----------------------------------------------------------------- mérito
+
+    def _resolve_merit(
+        self,
+        analysis: ProcessAnalysisInput,
+        regime: SelectedRegime | None,
+        base_warnings: list[str],
+    ) -> ConclusionResult:
+        # M0 — regime não identificado (inalterado, era R0).
         if regime is None:
             return ConclusionResult(
                 status=ConclusionStatus.VERIFICAR_MANUALMENTE,
@@ -66,42 +124,55 @@ class ConclusionResolver:
         to_verify = self._items_to_verify_codes(analysis.checklist)
         augmented_basis = self._augment_basis(analysis, regime)
 
-        # R2 — renda acima do limite
+        # M1 — renda acima do limite (agora só produzida pelo IncomeLimitCalculator).
         if analysis.income.income_status == IncomeStatus.ACIMA_DO_LIMITE:
-            basis = self._dedupe(
-                [*augmented_basis, *self._basis_from(regime, "other_income_sources")]
-            )
             return ConclusionResult(
                 status=ConclusionStatus.INDEFERIMENTO_SUGERIDO,
-                main_reason="Renda bruta mensal total acima do limite de 5 salários mínimos.",
+                denial_ground=DenialGround.RENDA_ACIMA_DO_LIMITE,
+                main_reason=self._income_above_limit_reason(analysis),
                 items_to_verify=to_verify,
-                legal_basis=basis,
+                legal_basis=self._dedupe(
+                    [*augmented_basis, *self._basis_from(regime, "other_income_sources")]
+                ),
                 warnings=base_warnings,
             )
 
-        # R3 — documento obrigatório ausente (com guarda de summary_denial)
+        # M2 — documento obrigatório ausente (inalterado, era R3), com denial_ground.
         if missing_required:
             return self._resolve_missing_required(
                 regime, missing_required, to_verify, augmented_basis, base_warnings
             )
 
-        # R4 — verificação manual
+        # M3 — verificação manual (inalterado, era R4).
         if to_verify or analysis.income.income_status == IncomeStatus.VERIFICAR:
-            verify_codes = self._with_income_marker(to_verify, analysis.income.income_status)
             return ConclusionResult(
                 status=ConclusionStatus.VERIFICAR_MANUALMENTE,
                 main_reason="Há itens que exigem verificação manual antes da decisão.",
-                items_to_verify=verify_codes,
+                items_to_verify=self._with_income_marker(
+                    to_verify, analysis.income.income_status
+                ),
                 legal_basis=self._dedupe(augmented_basis),
                 warnings=base_warnings,
             )
 
-        # R5 — apto
+        # M4 — apto (procedência a ser declarada pela autoridade — ADR-S2-01).
         return ConclusionResult(
             status=ConclusionStatus.APTO_PARA_ANALISE_DE_DEFERIMENTO,
             main_reason="Pedido regularmente instruído quanto aos itens verificados pela POC.",
             warnings=base_warnings,
         )
+
+    @staticmethod
+    def _income_above_limit_reason(analysis: ProcessAnalysisInput) -> str:
+        """Motivo com os números que o calculador ancorou (transparência da decisão)."""
+        income = analysis.income
+        if income.total_monthly_gross is not None and income.applied_income_limit is not None:
+            return (
+                f"Renda bruta mensal comprovada de R$ {income.total_monthly_gross:,.2f} "
+                f"acima do limite de R$ {income.applied_income_limit:,.2f} "
+                f"(5 salários mínimos do exercício {analysis.request.requested_year})."
+            )
+        return "Renda bruta mensal total acima do limite de 5 salários mínimos."
 
     # ----------------------------------------------------------------- R3
 

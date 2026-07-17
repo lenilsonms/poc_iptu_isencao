@@ -20,6 +20,7 @@ from ..domain.models import ConclusionResult, ProcessAnalysisInput
 from .conclusion_resolver import ConclusionResolver
 from .confidence_policy import ConfidencePolicy
 from .legal_regime_selector import LegalRegimeSelector
+from .income_limit_calculator import IncomeLimitCalculator
 
 
 class ProcessEvaluator:
@@ -28,10 +29,12 @@ class ProcessEvaluator:
     def __init__(
         self,
         confidence_policy: ConfidencePolicy,
+        income_limit_calculator: IncomeLimitCalculator,
         regime_selector: LegalRegimeSelector,
         conclusion_resolver: ConclusionResolver,
     ) -> None:
         self._confidence_policy = confidence_policy
+        self._income_limit_calculator = income_limit_calculator
         self._regime_selector = regime_selector
         self._conclusion_resolver = conclusion_resolver
 
@@ -39,19 +42,30 @@ class ProcessEvaluator:
         normalized_checklist = [
             self._confidence_policy.normalize(item) for item in analysis_input.checklist
         ]
+        normalized_income, income_warnings = self._income_limit_calculator.normalize(
+            analysis_input.income, analysis_input.request.requested_year
+        )
         normalized_input = analysis_input.model_copy(
-            update={"checklist": normalized_checklist}
+            update={"checklist": normalized_checklist, "income": normalized_income}
         )
         regime = self._regime_selector.select(normalized_input.request)
-        return self._conclusion_resolver.resolve(normalized_input, regime)
+        conclusion = self._conclusion_resolver.resolve(normalized_input, regime)
+
+        if income_warnings:
+            # Avisos do calculador são anexados à conclusão (nunca silenciados).
+            conclusion = conclusion.model_copy(
+                update={"warnings": [*conclusion.warnings, *income_warnings]}
+            )
+        return conclusion
 
 
 def build_evaluator(config_dir: Path | str) -> ProcessEvaluator:
-    """Composition root do núcleo: carrega/valida config e injeta as dependências."""
     app_config: AppConfig = ConfigLoader(config_dir).load()
-    confidence_policy = ConfidencePolicy(app_config.business_rules.confidence)
-    regime_selector = LegalRegimeSelector(
-        app_config.legal_references, app_config.business_rules
+    return ProcessEvaluator(
+        confidence_policy=ConfidencePolicy(app_config.business_rules.confidence),
+        income_limit_calculator=IncomeLimitCalculator(app_config.business_rules.income_limit),
+        regime_selector=LegalRegimeSelector(
+            app_config.legal_references, app_config.business_rules
+        ),
+        conclusion_resolver=ConclusionResolver(app_config.business_rules),
     )
-    conclusion_resolver = ConclusionResolver(app_config.business_rules)
-    return ProcessEvaluator(confidence_policy, regime_selector, conclusion_resolver)

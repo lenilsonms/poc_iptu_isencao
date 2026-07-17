@@ -13,8 +13,7 @@ from ..domain.errors import PocIptuError
 from ..domain.pipeline_models import ProcessAnalysisResult
 from . import draft_layout
 
-# Decisão vedada: a POC nunca defere; no máximo indica aptidão à análise de deferimento.
-_FORBIDDEN_DECISION = re.compile(r"\bDEFIRO\b")
+_FORBIDDEN_DECISION = re.compile(r"\bDEFIRO\b|\bJULGO\s+PROCEDENTE\b", re.IGNORECASE)
 # CPF completo (11 dígitos, com ou sem máscara de pontuação) não pode aparecer no texto.
 _UNMASKED_CPF = re.compile(r"\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b")
 # Referências de página escritas no corpo da minuta (ex.: 'página 7').

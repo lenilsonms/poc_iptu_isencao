@@ -16,10 +16,10 @@ from .models import (
     PropertyQualification,
     RequestIdentification,
     SelectedRegime,
+    ApplicantQualification
 )
 from .pipeline_models import (
     AnalysisMetadata,
-    ApplicantQualification,
     ClassifiedDocument,
     DecisionDraft,
     DraftSection,

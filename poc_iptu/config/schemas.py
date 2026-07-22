@@ -54,6 +54,26 @@ class IncomeLimitConfig(_StrictConfig):
         minimum_wage = self.salario_minimo_por_ano.get(year)
         return None if minimum_wage is None else self.multiplier * minimum_wage
 
+class TimelinessConfig(_StrictConfig):
+    """Prazos de tempestividade por exercício (Tabela 1 da SRC)."""
+
+    deadlines_by_year: dict[int, date]
+
+    def deadline_for_year(self, year: int) -> date | None:
+        return self.deadlines_by_year.get(year)
+
+
+class LegitimacyConfig(_StrictConfig):
+    """Parâmetros da verificação de legitimidade (Etapa 3)."""
+
+    qualifying_relationship_types: list[str]
+
+
+class AdmissibilityConfig(_StrictConfig):
+    timeliness: TimelinessConfig
+    legitimacy: LegitimacyConfig
+
+
 class BusinessRulesConfig(_StrictConfig):
     version: str
     depends_on_legal_references_version: str
@@ -61,7 +81,7 @@ class BusinessRulesConfig(_StrictConfig):
     confidence: ConfidencePolicyConfig
     summary_denial: SummaryDenialConfig
     income_limit: IncomeLimitConfig
-
+    admissibility: AdmissibilityConfig
 
 class DecreeConfig(_StrictConfig):
     id: LegalRegimeId

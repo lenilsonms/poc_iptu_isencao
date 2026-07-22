@@ -24,7 +24,6 @@ from .enums import (
     AdmissibilityStatus,
     DenialGround,
 )
-
 from .enums import (  # acrescentar ao import existente
     AdmissibilityStatus,
     DenialGround,
@@ -35,6 +34,17 @@ class _Frozen(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+class ApplicantQualification(_Frozen):
+    """Qualificação do requerente. O CPF circula MASCARADO nesta camada (UI/minuta/logs)."""
+
+    name: str
+    cpf_masked: str | None = Field(default=None, alias="cpf_row")
+    estado_civil: str | None = None
+    process_indicates_spouse_or_partner: bool = False
+    has_representative: bool = False
+    has_civil_incapacity: bool = False
+    has_disability_requiring_legal_representative: bool = False
+    requester_is_benefit_holder: bool | None = None
 
 class IncomeSource(_Frozen):
     """Uma fonte de renda identificada no processo, com valor bruto mensal quando extraível.
@@ -80,6 +90,7 @@ class IncomeAnalysis(_Frozen):
 
 class ProcessAnalysisInput(_Frozen):
     request: RequestIdentification
+    applicant: ApplicantQualification
     property: PropertyQualification
     income: IncomeAnalysis
     checklist: list[ChecklistItemResult]
@@ -126,6 +137,7 @@ class RequestIdentification(_Frozen):
     requested_year: int
     protocol_date: date | None = None
     explicit_decree_mention: str | None = None
+    benefit_concession_date: date | None = None
     page: int | None = None
 
 class SelectedRegime(_Frozen):

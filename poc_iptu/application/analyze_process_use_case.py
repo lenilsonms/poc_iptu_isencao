@@ -97,6 +97,7 @@ class AnalyzeProcessUseCase:
 
         analysis_input = ProcessAnalysisInput(
             request=fields.request,
+            applicant=fields.applicant,
             property=fields.property,
             income=fields.income,
             checklist=checklist,

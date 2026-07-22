@@ -42,7 +42,7 @@ class ConclusionResolver:
         self, analysis: ProcessAnalysisInput, regime: SelectedRegime | None
     ) -> ConclusionResult:
         base_warnings = self._collect_non_determinant_warnings(analysis)
-
+        base_warnings = [*base_warnings, *self._admissibility_warnings(analysis)]
         # R1 — fora do escopo (inalterado).
         if analysis.request.benefit_type in self._out_of_scope:
             return ConclusionResult(
@@ -57,11 +57,34 @@ class ConclusionResolver:
         if admissibility_conclusion is not None:
             return admissibility_conclusion
 
-        # -------- ANDAR DE MÉRITO (regras existentes renumeradas) --------
-        return self._resolve_merit(analysis, regime, base_warnings)
+        admissibility_to_verify = self._admissibility_items_to_verify(analysis)
+
+        return self._resolve_merit(analysis, regime, base_warnings, admissibility_to_verify)
 
     # ------------------------------------------------------- admissibilidade
 
+    @staticmethod
+    def _admissibility_items_to_verify(analysis: ProcessAnalysisInput) -> list[str]:
+        """Detalhes das verificações com status VERIFICAR (divergência inconclusiva)."""
+        facts = analysis.admissibility
+        items: list[str] = []
+        if facts.tempestividade == AdmissibilityStatus.VERIFICAR and facts.tempestividade_detail:
+            items.append(facts.tempestividade_detail)
+        if facts.legitimidade == AdmissibilityStatus.VERIFICAR and facts.legitimidade_detail:
+            items.append(facts.legitimidade_detail)
+        return items
+
+    @staticmethod
+    def _admissibility_warnings(analysis: ProcessAnalysisInput) -> list[str]:
+        """Detalhes das verificações NAO_AVALIADO (insumo ausente) viram avisos."""
+        facts = analysis.admissibility
+        warnings: list[str] = []
+        if facts.tempestividade == AdmissibilityStatus.NAO_AVALIADO and facts.tempestividade_detail:
+            warnings.append(facts.tempestividade_detail)
+        if facts.legitimidade == AdmissibilityStatus.NAO_AVALIADO and facts.legitimidade_detail:
+            warnings.append(facts.legitimidade_detail)
+        return warnings
+    
     def _resolve_admissibility(
         self, analysis: ProcessAnalysisInput, base_warnings: list[str]
     ) -> ConclusionResult | None:
@@ -108,6 +131,7 @@ class ConclusionResolver:
         analysis: ProcessAnalysisInput,
         regime: SelectedRegime | None,
         base_warnings: list[str],
+        admissibility_to_verify: list[str],
     ) -> ConclusionResult:
         # M0 — regime não identificado (inalterado, era R0).
         if regime is None:
@@ -144,12 +168,13 @@ class ConclusionResolver:
             )
 
         # M3 — verificação manual (inalterado, era R4).
-        if to_verify or analysis.income.income_status == IncomeStatus.VERIFICAR:
+        merged_to_verify = [*admissibility_to_verify, *to_verify]
+        if merged_to_verify or analysis.income.income_status == IncomeStatus.VERIFICAR:
             return ConclusionResult(
                 status=ConclusionStatus.VERIFICAR_MANUALMENTE,
                 main_reason="Há itens que exigem verificação manual antes da decisão.",
                 items_to_verify=self._with_income_marker(
-                    to_verify, analysis.income.income_status
+                    merged_to_verify, analysis.income.income_status
                 ),
                 legal_basis=self._dedupe(augmented_basis),
                 warnings=base_warnings,

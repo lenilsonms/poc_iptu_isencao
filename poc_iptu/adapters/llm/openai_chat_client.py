@@ -7,7 +7,7 @@ from .chat_client import ChatCompletionClient, LlmTransportError
 class OpenAISettings:
     """Configuração de conexão com a OpenAI direta."""
     api_key: str
-    model: str = "gpt-4o"
+    model: str = "gpt-5.6-luna"
     response_format_json: bool = True
 
     @classmethod
@@ -18,7 +18,7 @@ class OpenAISettings:
             return None
         return cls(
             api_key=api_key,
-            model=env.get("OPENAI_MODEL", "gpt-4o")
+            model=env.get("OPENAI_MODEL", "gpt-5.6-luna")
         )
 
 class OpenAIChatClient(ChatCompletionClient):
@@ -36,7 +36,7 @@ class OpenAIChatClient(ChatCompletionClient):
         client = self._get_client()
         
         # Verifica se o modelo possui restrições severas de API (como o gpt-5-mini ou família o1)
-        is_restricted_model = "gpt-5-mini" in self._settings.model or self._settings.model.startswith("o1")
+        is_restricted_model = "gpt-5.6-luna" in self._settings.model or self._settings.model.startswith("o1")
         
         messages = []
         if is_restricted_model:

@@ -89,6 +89,7 @@ class ConfigLoader:
             "confidence": self._require(raw, "confidence_policy", src),
             "summary_denial": self._require(raw, "summary_denial", src),
             "income_limit": self._require(raw, "income_limit", src),
+            "admissibility": self._require(raw, "admissibility", src),
         }
         try:
             return BusinessRulesConfig.model_validate(payload)

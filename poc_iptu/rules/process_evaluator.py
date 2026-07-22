@@ -16,6 +16,7 @@ from pathlib import Path
 
 from ..config.loader import ConfigLoader
 from ..config.schemas import AppConfig
+from ..rules.admissibility_evaluator import AdmissibilityEvaluator
 from ..domain.models import ConclusionResult, ProcessAnalysisInput
 from .conclusion_resolver import ConclusionResolver
 from .confidence_policy import ConfidencePolicy
@@ -30,11 +31,13 @@ class ProcessEvaluator:
         self,
         confidence_policy: ConfidencePolicy,
         income_limit_calculator: IncomeLimitCalculator,
+        admissibility_evaluator: AdmissibilityEvaluator,
         regime_selector: LegalRegimeSelector,
         conclusion_resolver: ConclusionResolver,
     ) -> None:
         self._confidence_policy = confidence_policy
         self._income_limit_calculator = income_limit_calculator
+        self._admissibility_evaluator = admissibility_evaluator
         self._regime_selector = regime_selector
         self._conclusion_resolver = conclusion_resolver
 
@@ -48,11 +51,17 @@ class ProcessEvaluator:
         normalized_input = analysis_input.model_copy(
             update={"checklist": normalized_checklist, "income": normalized_income}
         )
+        admissibility_facts = self._admissibility_evaluator.evaluate(
+            analysis_input.request, analysis_input.applicant, analysis_input.property
+        )
+        normalized_input = analysis_input.model_copy(update={
+            "checklist": normalized_checklist,
+            "income": normalized_income,
+            "admissibility": admissibility_facts,
+        })
         regime = self._regime_selector.select(normalized_input.request)
         conclusion = self._conclusion_resolver.resolve(normalized_input, regime)
-
         if income_warnings:
-            # Avisos do calculador são anexados à conclusão (nunca silenciados).
             conclusion = conclusion.model_copy(
                 update={"warnings": [*conclusion.warnings, *income_warnings]}
             )
@@ -64,8 +73,8 @@ def build_evaluator(config_dir: Path | str) -> ProcessEvaluator:
     return ProcessEvaluator(
         confidence_policy=ConfidencePolicy(app_config.business_rules.confidence),
         income_limit_calculator=IncomeLimitCalculator(app_config.business_rules.income_limit),
-        regime_selector=LegalRegimeSelector(
-            app_config.legal_references, app_config.business_rules
-        ),
+        admissibility_evaluator=AdmissibilityEvaluator(app_config.business_rules.admissibility),
+        regime_selector=LegalRegimeSelector(app_config.legal_references, app_config.business_rules),
         conclusion_resolver=ConclusionResolver(app_config.business_rules),
     )
+

@@ -21,7 +21,7 @@ def test_com_azure_no_ambiente_seleciona_modo_azure():
     env = {
         "AZURE_OPENAI_ENDPOINT": "https://exemplo.openai.azure.com",
         "AZURE_OPENAI_API_KEY": "chave-fake",
-        "AZURE_OPENAI_DEPLOYMENT": "gpt-4o",
+        "AZURE_OPENAI_DEPLOYMENT": "gpt-5.6-luna",
     }
     context = build_runner(config_dir=CONFIG_DIR, env=env)
     assert context.mode == AnalysisMode.AZURE

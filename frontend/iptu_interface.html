@@ -905,7 +905,7 @@ Autoridade Competente (assinar após revisão)`,
       checklist_version:        'v2025.1',
       prompt_version:            'v1.2.0',
       llm_provider:              'openai',
-      llm_model:                 'gpt-4o-mini',
+      llm_model:                 'gpt-5.6-luna',
       ocr_engine:                'llm-vision',
       pii_policy:                'mask-cpf',
     }
@@ -980,7 +980,7 @@ Autoridade Competente (assinar após revisão)`,
       checklist_version:        'v2025.1',
       prompt_version:            'v1.2.0',
       llm_provider:              'openai',
-      llm_model:                 'gpt-4o-mini',
+      llm_model:                 'gpt-5.6-luna',
       ocr_engine:                'llm-vision',
       pii_policy:                'mask-cpf',
     }
@@ -1060,7 +1060,7 @@ Autoridade Competente (assinar após revisão)`,
       checklist_version:        'v2025.1',
       prompt_version:            'v1.2.0',
       llm_provider:              'openai',
-      llm_model:                 'gpt-4o-mini',
+      llm_model:                 'gpt-5.6-luna',
       ocr_engine:                'llm-vision',
       pii_policy:                'mask-cpf',
     }
@@ -1261,6 +1261,18 @@ function setFile(file) {
     (file.size / 1024 / 1024).toFixed(2) + ' MB · PDF';
   document.getElementById('analyze-btn').disabled = false;
 }
+const processInput = document.getElementById('process-id');
+  if (!processInput.value) {
+    // Tenta extrair o padrão SEI (ex: SEI_1101.2023_0005737_8.pdf -> 1101.2023/0005737-8)
+    const match = file.name.match(/(?:SEI_)?(\d{4}\.\d{4})_(\d{7})_(\d)/i);
+    if (match) {
+      processInput.value = `${match[1]}/${match[2]}-${match[3]}`;
+    } else {
+      // Fallback: usa o nome do arquivo limpo sem a extensão .pdf
+      processInput.value = file.name.replace(/\.pdf$/i, '');
+    }
+  }
+  
 function removeFile() {
   selectedFile = null;
   document.getElementById('drop-zone').style.display = '';
@@ -1272,7 +1284,8 @@ function removeFile() {
 async function startAnalysis() {
   if (!selectedFile) return;
 
-  const processId = document.getElementById('process-id').value || '';
+
+  const processId = document.getElementById('process-id').value.trim();
 
   document.getElementById('drop-zone').style.display = 'none';
   document.getElementById('file-selected-row').style.display = 'none';
@@ -1288,7 +1301,9 @@ async function startAnalysis() {
 
   const formData = new FormData();
   formData.append('file', selectedFile);
-  formData.append('process_id', processId);
+  if (processId) {
+    formData.append('process_id', processId);
+  }
 
   try {
     activateProgressStep(1, 30);

@@ -64,7 +64,7 @@ extraction:
     - NÃO invente valores. Quando um dado não puder ser determinado com segurança, use null
       (para campos de texto) ou o status "VERIFICAR" (para income_status).
     - O CPF deve ser retornado SEMPRE no formato de apresentação.
-    - benefit_type deve ser um de: APOSENTADO, PENSIONISTA, LOAS, PRODUTOR_RURAL, OUTRO.
+    - Os campos 'benefit_type' e 'benefit_condition' devem ser ESTRITAMENTE preenchidos com um destes valores exatos: APOSENTADO, PENSIONISTA, LOAS, PRODUTOR_RURAL, OUTRO.
     - relationship_type deve ser um de: PROPRIETARIO, COPROPRIETARIO, COMPROMISSARIO,
       TITULAR_DOMINIO_UTIL, POSSUIDOR, CESSIONARIO, USUFRUTUARIO, VERIFICAR.
     - income_sources: liste TODAS as fontes de renda identificadas no processo
@@ -80,6 +80,15 @@ extraction:
       fonte de renda/atividade econômica; caso contrário, null. Se houver fonte em aberto sem
       comprovação, income_status deve ser "VERIFICAR".
     - Responda EXCLUSIVAMENTE com JSON válido no formato especificado, sem markdown.
+    - protocol_date: a data de AUTUAÇÃO/protocolo do processo (formato AAAA-MM-DD),
+      localizada no requerimento padrão, etiqueta de autuação ou carimbo de protocolo;
+      null se não constar com clareza. NUNCA deduza a data de outros eventos.
+    - benefit_concession_date: a data de CONCESSÃO do benefício previdenciário/LOAS
+      (formato AAAA-MM-DD), constante da carta de concessão, extrato do INSS ou
+      documento equivalente; null se não constar.
+    - requester_is_benefit_holder: true se o requerente é o próprio titular do
+      benefício; false se o pedido é formulado por pessoa diversa do titular;
+      null quando não for possível determinar pelos documentos.
 
     Formato de saída:
     {
@@ -87,6 +96,8 @@ extraction:
         "benefit_type": "<tipo>",
         "requested_year": <int>,
         "explicit_decree_mention": "<string ou null>",
+        "protocol_date": "<AAAA-MM-DD ou null>",
+        "benefit_concession_date": "<AAAA-MM-DD ou null>",
         "page": <int ou null>
       },
       "applicant": {
@@ -96,7 +107,8 @@ extraction:
         "process_indicates_spouse_or_partner": <bool>,
         "has_representative": <bool>,
         "has_civil_incapacity": <bool>,
-        "has_disability_requiring_legal_representative": <bool>
+        "has_disability_requiring_legal_representative": <bool>,
+        "requester_is_benefit_holder": <true | false | null>
       },
       "property": {
         "registration_number": "<string ou null>",

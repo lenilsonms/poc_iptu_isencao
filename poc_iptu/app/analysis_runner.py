@@ -145,7 +145,7 @@ def _build_ocr(env: dict[str, str]) -> OcrPort:
         from openai import OpenAI
         # Aproveitamos a chave já existente do ambiente
         client = OpenAI(api_key=env.get("OPENAI_API_KEY")) 
-        return LlmVisionOcr(client=client, model_name=env.get("OPENAI_MODEL_VISION", "gpt-5.4-mini"))
+        return LlmVisionOcr(client=client, model_name=env.get("OPENAI_MODEL_VISION", "gpt-5.6-luna"))
         
     from ..adapters.ocr import NoOpOcr
     return NoOpOcr()

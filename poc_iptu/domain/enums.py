@@ -96,3 +96,11 @@ class LegalRegimeId(str, Enum):
     DEC_22429_2003 = "DEC_22429_2003"
     DEC_34767_2018 = "DEC_34767_2018"
     DEC_42621_2025 = "DEC_42621_2025"
+
+
+class AdmissibilityStatus(str, Enum):
+    """Resultado de uma verificação de admissibilidade (Etapas 2 e 3 do fluxo SRC)."""
+    OK = "OK"
+    FALHA = "FALHA"
+    VERIFICAR = "VERIFICAR"
+    NAO_AVALIADO = "NAO_AVALIADO" 

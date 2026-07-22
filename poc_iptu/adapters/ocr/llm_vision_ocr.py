@@ -5,7 +5,7 @@ from poc_iptu.domain.errors import PocIptuError
 class LlmVisionOcr(OcrPort):
     """Motor de OCR baseado em LLM Multimodal otimizado para velocidade."""
 
-    def __init__(self, client, model_name: str = "gpt-5-mini"):
+    def __init__(self, client, model_name: str = "gpt-5.6-luna"):
         self._client = client
         self._model_name = model_name
 
@@ -43,7 +43,7 @@ class LlmVisionOcr(OcrPort):
         }
 
         # Aplica a trava de raciocínio se for um modelo da família o1/gpt-5
-        if "gpt-5.4-mini" in self._model_name or self._model_name.startswith("o1"):
+        if "gpt-5.6-luna" in self._model_name or self._model_name.startswith("o1"):
             kwargs["reasoning_effort"] = "low" # <-- Faz o modelo "pensar" o mínimo possível
         else:
             kwargs["temperature"] = 0.0 # Para modelos padrão (gpt-4o), fixa o determinismo

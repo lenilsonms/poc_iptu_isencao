@@ -18,6 +18,7 @@ from .models import (
     IncomeAnalysis,
     PropertyQualification,
     RequestIdentification,
+    ApplicantQualification,
     _Frozen,
 )
 
@@ -62,18 +63,6 @@ class ClassifiedDocument(_Frozen):
     text_excerpt: str = ""
     confidence: float = 1.0
     evidence: str = ""
-
-
-class ApplicantQualification(_Frozen):
-    """Qualificação do requerente. O CPF circula MASCARADO nesta camada (UI/minuta/logs)."""
-
-    name: str
-    cpf_masked: str | None = Field(default=None, alias="cpf_row")
-    estado_civil: str | None = None
-    process_indicates_spouse_or_partner: bool = False
-    has_representative: bool = False
-    has_civil_incapacity: bool = False
-    has_disability_requiring_legal_representative: bool = False
 
 
 class ExtractedFields(_Frozen):

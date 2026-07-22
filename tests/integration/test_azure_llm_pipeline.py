@@ -121,7 +121,7 @@ def test_pipeline_completo_via_caminho_azure_reproduz_caso_ouro(prompts):
         field_extractor=AzureFieldExtraction(ScriptedChatClient(_EXTRACTION_JSON), prompts),
         ocr=ocr,
         llm_provider="azure-openai",
-        llm_model="azure-openai:gpt-4o",
+        llm_model="azure-openai:gpt-5.6-luna",
         prompt_version=prompts.version,
     )
     pdf = build_pdf_with_text_pages(["Pedido", "RG", "Matrícula"])
